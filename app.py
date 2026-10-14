@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "NetMan IDS/IPS Server is running!"
+    return "NetMan Auto Deployment Test - Version 2!"
 
 @app.route("/health")
 def health():
