@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "NetMan Auto Deployment Test - Version 2!"
+    return "NetMan"
 
 @app.route("/health")
 def health():
