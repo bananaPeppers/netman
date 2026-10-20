@@ -1,0 +1,33 @@
+{% extends "base.html" %} {% block page_styles %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/login.css') }}"
+/>
+{% endblock %} {% block content %}
+<main>
+  <form class="login-block" method="post">
+    <p class="header">create network</p>
+    <div class="line"></div>
+    <input
+      class="fields"
+      type="text"
+      name="network_name"
+      placeholder="network name"
+      aria-label="Network name"
+      maxlength="80"
+      required
+    />
+    <button class="login-btn" type="submit">
+      <p class="login-btn-txt">create</p>
+    </button>
+  </form>
+
+  <div class="bottom-section">
+    <h1 class="h1-netman">netman</h1>
+    <div class="line"></div>
+    <p>Monitor</p>
+    <p>Manage</p>
+    <p>Secure</p>
+  </div>
+</main>
+{% endblock %}
