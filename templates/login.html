@@ -1,0 +1,45 @@
+{% extends "base.html" %} {% block page_styles %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/login.css') }}"
+/>
+{% endblock %} {% block content %}
+<main>
+  <form class="login-block" method="post">
+    <p class="header">login</p>
+    <div class="line"></div>
+    <input
+      class="fields"
+      type="text"
+      name="username"
+      placeholder="username"
+      aria-label="Username"
+      autocomplete="username"
+      maxlength="80"
+      value="{{ username }}"
+      required
+    />
+    <input
+      class="fields"
+      type="password"
+      name="password"
+      placeholder="password"
+      aria-label="Password"
+      autocomplete="current-password"
+      maxlength="1024"
+      required
+    />
+    <button class="login-btn" type="submit">
+      <p class="login-btn-txt">login</p>
+    </button>
+  </form>
+
+  <div class="bottom-section">
+    <h1 class="h1-netman">netman</h1>
+    <div class="line"></div>
+    <p>Monitor</p>
+    <p>Manage</p>
+    <p>Secure</p>
+  </div>
+</main>
+{% endblock %}
