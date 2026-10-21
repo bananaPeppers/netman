@@ -11,10 +11,20 @@
   <p class="popup-text">
     Enter this code in your client app to connect it to your dashboard
   </p>
-  <p class="popup-label">--PAIRING CODE--</p>
-  <p class="popup-code" id="pair-code"></p>
-  <p class="popup-note">this code is valid only for 5 minutes</p>
-  <button class="add-btn" id="close-popup-btn" type="button">close</button>
+  <div class="code-box" id="code-box" hidden>
+    <p class="popup-label">--PAIRING CODE--</p>
+    <p class="popup-code" id="pair-code"></p>
+    <p class="popup-note">this code is valid only for 5 minutes</p>
+  </div>
+  <div class="popup-buttons">
+    <button class="add-btn" id="generate-btn" type="button">
+      generate code
+    </button>
+    <button class="add-btn" id="close-popup-btn" type="button">close</button>
+  </div>
+  <p class="popup-warning" id="popup-warning" hidden>
+    remember this code before closing this window
+  </p>
 </div>
 
 <div class="stats">
@@ -34,26 +44,37 @@
 
 <script>
   const popup = document.getElementById("add-popup");
+  const codeBox = document.getElementById("code-box");
   const codeText = document.getElementById("pair-code");
+  const generateBtn = document.getElementById("generate-btn");
+  const warning = document.getElementById("popup-warning");
 
-  // "+ Add Device": ask the api for a new pairing code, then show the popup
+  // open the popup on click
   document
     .getElementById("add-device-btn")
-    .addEventListener("click", async () => {
-      codeText.textContent = "...";
-      popup.classList.add("open");
-      try {
-        const res = await fetch("/api/pairing/pairCode", { method: "POST" });
-        if (!res.ok) throw new Error(res.status);
-        codeText.textContent = (await res.json()).code;
-      } catch {
-        codeText.textContent = "error";
-      }
-    });
+    .addEventListener("click", () => popup.classList.add("open"));
 
-  // "close": hide the popup and forget the code
+  // code generator
+  generateBtn.addEventListener("click", async () => {
+    generateBtn.disabled = true;
+    codeText.textContent = "...";
+    codeBox.hidden = false;
+    try {
+      const res = await fetch("/api/pairing/pairCode", { method: "POST" });
+      if (!res.ok) throw new Error(res.status);
+      codeText.textContent = (await res.json()).code;
+      warning.hidden = false; // show the warning once a code exists
+    } catch {
+      codeText.textContent = "error";
+    }
+    generateBtn.disabled = false;
+  });
+
+  // close popup
   document.getElementById("close-popup-btn").addEventListener("click", () => {
     popup.classList.remove("open");
+    codeBox.hidden = true;
+    warning.hidden = true;
     codeText.textContent = "";
   });
 </script>

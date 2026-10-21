@@ -98,3 +98,30 @@
   color: #b0bcc8;
   font-size: 12px;
 }
+
+.code-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* the hidden attribute must beat the display: flex above */
+.code-box[hidden] {
+  display: none;
+}
+
+.popup-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.add-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.popup-warning {
+  color: #e6f0ee;
+  font-size: 12px;
+}
