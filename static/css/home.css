@@ -90,3 +90,27 @@ main{
   height: 3px;
   background-color: #4A5568;
 }
+
+.stats {
+  display: flex;
+  gap: 10px;
+  padding: 0 20px;
+}
+
+.stat-card {
+  flex: 1;
+  background-color: #26323c;
+  border-radius: 12px;
+  padding: 12px 15px;
+}
+
+.stat-label {
+  color: #b0bcc8;
+  font-size: 12px;
+}
+
+.stat-value {
+  color: #e6f0ee;
+  font-size: 26px;
+  font-weight: 600;
+}

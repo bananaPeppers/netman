@@ -1,0 +1,40 @@
+.dashboard-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.dashboard-page .stats {
+  align-self: stretch;
+}
+
+.network-header {
+  padding: 20px;
+  display: flex;
+  background-color: #26323c;
+  height: 45px;
+  align-items: center;
+  margin: 20px;
+  border-radius: 15px;
+}
+
+.network-title {
+  color: #e6f0ee;
+  font-size: 18px;
+  font-weight: 400;
+  padding-right: 20px;
+}
+
+.network-name {
+  color: #b0bcc8;
+  font-size: 18px;
+  padding-right: 20px;
+}
+
+.green {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #8fbf8f;
+}

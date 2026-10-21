@@ -1,6 +1,8 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, session
 
-from blueprints.common import require_login
+from blueprints.common import device_stats, require_login
+from extensions import db
+from models import User
 
 bp = Blueprint(
     "dashboard",
@@ -12,7 +14,12 @@ bp = Blueprint(
 bp.before_request(require_login)
 
 
-# dashboard page
+# show the logged-in user's network name
 @bp.route("")
 def index():
-    return render_template("dashboard/index.html")
+    user = db.session.get(User, session["user_id"])
+    return render_template(
+        "dashboard/index.html",
+        network=user.network if user else "-",
+        **device_stats(),
+    )

@@ -1,1 +1,15 @@
-{% extends "layout.html" %}
+{% extends "layout.html" %} {% block page_styles %} {{ super() }}
+<link
+  rel="stylesheet"
+  href="{{ url_for('dashboard.static', filename='css/dashboard.css') }}"
+/>
+{% endblock %} {% block page %}
+<div class="dashboard-page">
+<div class="network-header">
+  <h2 class="network-title">My Network:</h2>
+  <p class="network-name">{{ network }}</p>
+  <div class="green"></div>
+</div>
+{% include "stats.html" %}
+</div>
+{% endblock %}
