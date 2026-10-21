@@ -1,23 +1,23 @@
-from flask import Flask, render_template, request, redirect, url_for, session
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, abort, render_template, request, redirect, url_for, session
 from sqlalchemy import text
 from werkzeug.security import check_password_hash
 
+from blueprints.dashboard import bp as dashboard_bp
+from blueprints.manage import bp as manage_bp
+from blueprints.secure import bp as secure_bp
 from config.config import Config
+from extensions import db
+from models import User
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
-db = SQLAlchemy(app)
+db.init_app(app)
 
-# users class to get user info
-class User(db.Model):
-    __tablename__ = "users"
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
-    network = db.Column(db.String(100), nullable=True)
-
+# each main page lives in its own folder under blueprints/
+app.register_blueprint(dashboard_bp)
+app.register_blueprint(manage_bp)
+app.register_blueprint(secure_bp)
 
 # login page: GET shows the form, POST authenticates the user
 @app.route("/", methods=["GET", "POST"])
@@ -39,7 +39,7 @@ def home():
     session["user_id"] = user.id
 
     # users with a network go home, others must create one first
-    return redirect(url_for("monitor" if user.network else "network"))
+    return redirect(url_for("dashboard.index" if user.network else "network"))
 
 
 # network page: GET shows the form, POST saves the network name for the user
@@ -57,7 +57,7 @@ def network():
             # save the network name on this user's row, then go home
             user.network = name
             db.session.commit()
-            return redirect(url_for("monitor"))
+            return redirect(url_for("dashboard.index"))
 
     return render_template("network.html")
 
@@ -67,30 +67,6 @@ def network():
 def logout():
     session.clear()
     return redirect(url_for("home"))
-
-
-# monitor page
-@app.route("/monitor")
-def monitor():
-    if not session.get("user_id"):
-        return redirect(url_for("home"))
-    return render_template("monitor.html")
-
-
-# manage page
-@app.route("/manage")
-def manage():
-    if not session.get("user_id"):
-        return redirect(url_for("home"))
-    return render_template("manage.html")
-
-
-# secure page
-@app.route("/secure")
-def secure():
-    if not session.get("user_id"):
-        return redirect(url_for("home"))
-    return render_template("secure.html")
 
 
 # health check to make sure if teh app has db connection or not

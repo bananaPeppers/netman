@@ -9,18 +9,18 @@
     <h1 class="h1-netman">netman</h1>
     <nav>
       <a
-        class="nav-btn {{ 'active' if request.endpoint == 'monitor' }}"
-        href="{{ url_for('monitor') }}"
-        >monitor</a
+        class="nav-btn {{ 'active' if request.blueprint == 'dashboard' }}"
+        href="{{ url_for('dashboard.index') }}"
+        >dashboard</a
       >
       <a
-        class="nav-btn {{ 'active' if request.endpoint == 'manage' }}"
-        href="{{ url_for('manage') }}"
+        class="nav-btn {{ 'active' if request.blueprint == 'manage' }}"
+        href="{{ url_for('manage.index') }}"
         >manage</a
       >
       <a
-        class="nav-btn {{ 'active' if request.endpoint == 'secure' }}"
-        href="{{ url_for('secure') }}"
+        class="nav-btn {{ 'active' if request.blueprint == 'secure' }}"
+        href="{{ url_for('secure.index') }}"
         >secure</a
       >
     </nav>

@@ -1,0 +1,23 @@
+{% extends "manage/manage_base.html" %} {% block panel %}
+<div class="panel-header">
+  <div>
+    <h2 class="panel-title">Manage connected network devices</h2>
+  </div>
+  <button class="add-btn" type="button">+ Add Device</button>
+</div>
+
+<div class="stats">
+  <div class="stat-card">
+    <p class="stat-label">Total Devices</p>
+    <p class="stat-value">{{ total }}</p>
+  </div>
+  <div class="stat-card">
+    <p class="stat-label">Online</p>
+    <p class="stat-value">{{ online }}</p>
+  </div>
+  <div class="stat-card">
+    <p class="stat-label">Offline</p>
+    <p class="stat-value">{{ offline }}</p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "side_layout.html" %} {% block page_styles %} {{ super() }}
+<link
+  rel="stylesheet"
+  href="{{ url_for('manage.static', filename='css/manage.css') }}"
+/>
+{% endblock %} {% block side_links %}
+<a
+  class="nav-btn {{ 'active' if section == 'devices' }}"
+  href="{{ url_for('manage.index', section='devices') }}"
+  >Devices</a
+>
+<a
+  class="nav-btn {{ 'active' if section == 'groups' }}"
+  href="{{ url_for('manage.index', section='groups') }}"
+  >Groups</a
+>
+<a
+  class="nav-btn {{ 'active' if section == 'rules' }}"
+  href="{{ url_for('manage.index', section='rules') }}"
+  >rules</a
+>
+{% endblock %}
