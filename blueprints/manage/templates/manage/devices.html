@@ -3,7 +3,18 @@
   <div>
     <h2 class="panel-title">Manage connected network devices</h2>
   </div>
-  <button class="add-btn" type="button">+ Add Device</button>
+  <button class="add-btn" id="add-device-btn" type="button">
+    + Add Device
+  </button>
+</div>
+<div class="add-popup" id="add-popup">
+  <p class="popup-text">
+    Enter this code in your client app to connect it to your dashboard
+  </p>
+  <p class="popup-label">--PAIRING CODE--</p>
+  <p class="popup-code" id="pair-code"></p>
+  <p class="popup-note">this code is valid only for 5 minutes</p>
+  <button class="add-btn" id="close-popup-btn" type="button">close</button>
 </div>
 
 <div class="stats">
@@ -20,4 +31,30 @@
     <p class="stat-value">{{ offline }}</p>
   </div>
 </div>
+
+<script>
+  const popup = document.getElementById("add-popup");
+  const codeText = document.getElementById("pair-code");
+
+  // "+ Add Device": ask the api for a new pairing code, then show the popup
+  document
+    .getElementById("add-device-btn")
+    .addEventListener("click", async () => {
+      codeText.textContent = "...";
+      popup.classList.add("open");
+      try {
+        const res = await fetch("/api/pairing/pairCode", { method: "POST" });
+        if (!res.ok) throw new Error(res.status);
+        codeText.textContent = (await res.json()).code;
+      } catch {
+        codeText.textContent = "error";
+      }
+    });
+
+  // "close": hide the popup and forget the code
+  document.getElementById("close-popup-btn").addEventListener("click", () => {
+    popup.classList.remove("open");
+    codeText.textContent = "";
+  });
+</script>
 {% endblock %}

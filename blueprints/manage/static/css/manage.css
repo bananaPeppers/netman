@@ -52,3 +52,49 @@
   font-family: inherit;
   cursor: pointer;
 }
+
+.add-popup {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 380px;
+  padding: 25px;
+  text-align: center;
+  background-color: #26323c;
+  border: 1px solid #7f95a8;
+  border-radius: 15px;
+  /* dims the page behind the popup */
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
+}
+
+.add-popup.open {
+  display: flex;
+}
+
+.popup-text {
+  color: #b0bcc8;
+  font-size: 14px;
+}
+
+.popup-label {
+  color: #7a9e9a;
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+
+.popup-code {
+  color: #e6f0ee;
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: 6px;
+}
+
+.popup-note {
+  color: #b0bcc8;
+  font-size: 12px;
+}

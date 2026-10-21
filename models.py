@@ -18,3 +18,18 @@ class Device(db.Model):
     device_name = db.Column(db.String(100), nullable=False)
     ip_address = db.Column(db.String(45), nullable=True)
     last_online = db.Column(db.DateTime, nullable=True)
+
+
+# pairing_codes table: short-lived codes used to connect a client app to a user
+class PairingCode(db.Model):
+    __tablename__ = "pairing_codes"
+    pairing_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    code_hash = db.Column(db.String(64), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    status = db.Column(
+        db.Enum("pending", "claimed", "approved", "expired", "rejected"),
+        nullable=False,
+        default="pending",
+    )

@@ -2,6 +2,7 @@ from flask import Flask, abort, render_template, request, redirect, url_for, ses
 from sqlalchemy import text
 from werkzeug.security import check_password_hash
 
+from api import bp as api_bp
 from blueprints.dashboard import bp as dashboard_bp
 from blueprints.manage import bp as manage_bp
 from blueprints.secure import bp as secure_bp
@@ -18,6 +19,7 @@ db.init_app(app)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(manage_bp)
 app.register_blueprint(secure_bp)
+app.register_blueprint(api_bp)
 
 # login page: GET shows the form, POST authenticates the user
 @app.route("/", methods=["GET", "POST"])
