@@ -6,17 +6,17 @@
 {% endblock %} {% block side_links %}
 <a
   class="nav-btn {{ 'active' if section == 'devices' }}"
-  href="{{ url_for('manage.index', section='devices') }}"
+  href="{{ url_for('manage.manage', section='devices') }}"
   >Devices</a
 >
 <a
   class="nav-btn {{ 'active' if section == 'groups' }}"
-  href="{{ url_for('manage.index', section='groups') }}"
+  href="{{ url_for('manage.manage', section='groups') }}"
   >Groups</a
 >
 <a
   class="nav-btn {{ 'active' if section == 'rules' }}"
-  href="{{ url_for('manage.index', section='rules') }}"
+  href="{{ url_for('manage.manage', section='rules') }}"
   >rules</a
 >
 {% endblock %}

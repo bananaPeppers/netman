@@ -12,8 +12,8 @@ bp = Blueprint(
 bp.before_request(require_login)
 
 
-# /secure opens index; /secure/<name> renders templates/secure/<name>.html
-@bp.route("", defaults={"section": "index"})
+# /secure opens secure.html; /secure/<name> renders templates/secure/<name>.html
+@bp.route("", defaults={"section": "secure"})
 @bp.route("/<section>")
-def index(section):
+def secure(section):
     return render_section("secure", section)

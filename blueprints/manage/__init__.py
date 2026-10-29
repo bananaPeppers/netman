@@ -14,6 +14,6 @@ bp.before_request(require_login)
 
 @bp.route("", defaults={"section": "devices"})
 @bp.route("/<section>")
-def index(section):
+def manage(section):
     context = device_stats() if section == "devices" else {}
     return render_section("manage", section, **context)

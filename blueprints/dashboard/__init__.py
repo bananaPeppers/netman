@@ -16,10 +16,10 @@ bp.before_request(require_login)
 
 # show the logged-in user's network name
 @bp.route("")
-def index():
+def dashboard():
     user = db.session.get(User, session["user_id"])
     return render_template(
-        "dashboard/index.html",
+        "dashboard/dashboard.html",
         network=user.network if user else "-",
         **device_stats(),
     )

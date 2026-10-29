@@ -20,7 +20,7 @@ class Device(db.Model):
     last_online = db.Column(db.DateTime, nullable=True)
 
 
-# pairing_codes table: short-lived codes used to connect a client app to a user
+# pairing codes table
 class PairingCode(db.Model):
     __tablename__ = "pairing_codes"
     pairing_id = db.Column(db.Integer, primary_key=True)

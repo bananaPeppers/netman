@@ -41,7 +41,7 @@ def home():
     session["user_id"] = user.id
 
     # users with a network go home, others must create one first
-    return redirect(url_for("dashboard.index" if user.network else "network"))
+    return redirect(url_for("dashboard.dashboard" if user.network else "network"))
 
 
 # network page: GET shows the form, POST saves the network name for the user
@@ -59,7 +59,7 @@ def network():
             # save the network name on this user's row, then go home
             user.network = name
             db.session.commit()
-            return redirect(url_for("dashboard.index"))
+            return redirect(url_for("dashboard.dashboard"))
 
     return render_template("network.html")
 
