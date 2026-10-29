@@ -23,11 +23,40 @@
     <button class="add-btn" id="close-popup-btn" type="button">close</button>
   </div>
   <p class="popup-warning" id="popup-warning" hidden>
-    remember this code before closing this window
+    remember this code before closing this window <br />
+    <br />
+    once you pair your device, you can close this window and refresh your screen
   </p>
 </div>
 
 {% include "stats.html" %}
+
+<div class="device-list">
+  {% for device in devices %}
+  <div class="device-tile">
+    <p>
+      <span class="device-label">device name:</span>
+      <span class="device-value">{{ device.device_name }}</span>
+    </p>
+    <p>
+      <span class="device-label">ip address:</span>
+      <span class="device-value">{{ device.ip_address }}</span>
+    </p>
+    <p>
+      <span class="device-label">Status:</span>
+      {% if device.last_online and device.last_online >= online_cutoff %}
+      <span class="device-value online"
+        ><span class="status-dot online"></span>online</span
+      >
+      {% else %}
+      <span class="device-value offline"
+        ><span class="status-dot offline"></span>offline</span
+      >
+      {% endif %}
+    </p>
+  </div>
+  {% endfor %}
+</div>
 
 <script>
   const popup = document.getElementById("add-popup");
