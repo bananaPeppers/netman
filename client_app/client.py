@@ -1,3 +1,8 @@
+# =====================================================================================================================================================
+# Written by: Samip Kafle
+# Date: Fri Oct 30 2026
+# Description: this is the client side script that registers teh device witht eh server and maintains communication
+# =====================================================================================================================================================
 import requests
 import platform
 import socket
@@ -8,14 +13,30 @@ import time
 from pathlib import Path
 
 
-# Server configuration
+
+
+
+# =====================================================================================================================================================
+# configuration 
+# =====================================================================================================================================================
+  
+# server IP. change this if the srever is running on a different ip address
 SERVER_URL = "http://127.0.0.1:5000/api/pairing/deviceInfo"
 
-# Local configuration
+# Local configuration to save the config file locally
 CONFIG_FILE = Path.home() / ".client_config.json"
 
 
-# Load saved pairing code
+
+# =====================================================================================================================================================
+# functions to load saved pairing code and device name from the config file if it exists. 
+# =====================================================================================================================================================
+
+# check if config file exists
+def config_exists():
+    return CONFIG_FILE.exists()
+
+# load saved pairing code
 def load_pairing_code():
     try:
         with open(CONFIG_FILE, "r") as file:
@@ -24,7 +45,7 @@ def load_pairing_code():
     except (FileNotFoundError, json.JSONDecodeError):
         return None
 
-# load device name
+# load saved devie name
 def load_device_name():
     try:
         with open(CONFIG_FILE, "r") as file:
@@ -33,17 +54,20 @@ def load_device_name():
     except (FileNotFoundError, json.JSONDecodeError):
         return None
 
-
-# Save pairing code locally
-def save_pairing_code(pairing_code, device_name):
+# Save pairing code locally when registering. it creates the config file if it doesnot exist already
+def save_config(key, value):
+    config = {}
+    if config_exists():
+        with open(CONFIG_FILE, "r") as file:
+            config = json.load(file)
+    config[key] = value
     with open(CONFIG_FILE, "w") as file:
-        json.dump({
-            "pairing_code": pairing_code,
-            "device_name": device_name
-        }, file)
+        json.dump(config, file, indent=4)
 
-
-# Send request to server
+# =====================================================================================================================================================
+# connection request to server. 
+# =====================================================================================================================================================
+  
 def send_request(payload):
     try:
         response = requests.post(
@@ -78,6 +102,10 @@ def send_request(payload):
 
   
 
+# =====================================================================================================================================================
+# once connection is established, move on to collecting device stats and info
+# =====================================================================================================================================================
+  
 # Get operating system
 def get_os():
     try:
@@ -99,75 +127,94 @@ def get_ip():
     return None
 
 
-# Main client function
+# more info is added in this section later.....
+
+
+# =====================================================================================================================================================
+# registering, pairing and authentication
+# =====================================================================================================================================================
+
+def registerDevice():
+    pairing_code = input(
+        "Enter pairing code to register your device: ").strip()
+    print("Verifying pairing code...")
+    while not verifyDevice(pairing_code):
+        print("Invalid code. Try again.")
+        pairing_code = input(
+            "Enter pairing code: "
+        ).strip()
+        print("Verifying pairing code...")
+    print("Code verified!")
+
+    while True:
+        device_name = input("Enter device name: ").strip()
+        if device_name:
+            break
+        print("Device name cannot be empty.")
+
+    save_config("device_name", device_name)
+    save_config("pairing_code", pairing_code)
+    print("Device configuration saved successfully!")
+
+
+    return pairing_code, device_name
+
+
+def verifyDevice(pairing_code):
+    response = send_request({
+        "action": "verify",
+        "pairing_code": pairing_code
+    })
+    if response.get("paired") is True:
+        print("Pairing code verified successfully!")
+        return True
+    else:
+        print("Pairing code verification failed!")
+        print("Error:", response.get("error"))
+        return False
+
+
+
+# =====================================================================================================================================================
+# Main client function to process the info and talk with the server
+# =====================================================================================================================================================
 def main():
+    print("===== NETMAN CLIENT APP =====")
+    print("======V1. Oct 30, 2026=======")
 
-    print("===== NETMAN CLIENT =====")
 
+    # -----------------------------------------------Step 1: registering, pairing and authentication-----------------------------------------------
+    # first get the pairing code and device name if exists
     pairing_code = load_pairing_code()
     device_name = load_device_name()
+    
 
-    # Step 1: Verify pairing code
-    while True:
 
-        if not pairing_code:
-            pairing_code = input("Enter pairing code: ").strip()
-
-        response = send_request({
-            "action": "verify",
-            "pairing_code": pairing_code
-        })
-
-        if response.get("paired") is True:
-
-            print("Pairing code verified!")
-
-            if response.get("registered") is True:
-                print("Device already registered.")
-                print("Device ID:", response.get("device_id"))
-            else:
-                print("Please register this device.")
-
-                # Ask for device name after successful pairing
-                while True:
-                    device_name = input("Enter device name: ").strip()
-
-                    if device_name:
-                        break
-
-                    print("Device name cannot be empty.")
-
-                print("Device Name:", device_name)
-                save_pairing_code(pairing_code, device_name)
-
-            break
-
-        elif response.get("_http_status") == 404:
-            print("Invalid pairing code. Try again.")
-            pairing_code = None
+    #verify if device is registered
+    if not pairing_code or not device_name:
+        print("device has not been registered yet. please register...")
+        pairing_code, device_name = registerDevice()
+        
+    # if registered already, skip to pairing
+    else:
+        print("pairing device...")
+        if verifyDevice(pairing_code):
+            print("device successfully paired")
 
         else:
-            print("Verification failed:", response.get("error"))
-            return
+            print("device could not be paired. plese check the pairing code in config file")
+            return 0
 
-    # Step 2: Collect device information
-    print("\nCollecting device information...")
+     
+    #********** at this point the client should have 1: established connection to the server and 2: registered and or paired the device with the server **********#
 
-    operating_system = get_os()
-    ip_address = get_ip()
-
-    print("Operating System:", operating_system)
-    print("IP Address:", ip_address)
-
-    # Step 3: Synchronize device information every 60 seconds
+   
+    # -----------------------------------------------Step 2: Synchronize device information every 10 seconds---------------------------
     while True:
-
-        print("\nCollecting device information...")
-
         operating_system = get_os()
         ip_address = get_ip()
 
-        print("Operating System:", operating_system)
+
         print("IP Address:", ip_address)
 
         print("\nSynchronizing with server...")
@@ -180,26 +227,19 @@ def main():
             "device_name": device_name
         })
 
-        # Step 4: Process server response
-        if response.get("synced") is True:
-
-            
-            print("Device Name:", device_name)
-            print("Status:", response.get("status"))
-
-            save_pairing_code(pairing_code, device_name)
-
-        else:
-            print("Synchronization failed!")
+        if not response.get("synced"):
+            print("Sync with the server failed!")
             print("Error:", response.get("error"))
 
             sync_status = response.get("sync_status", {})
 
             for field, status in sync_status.items():
                 print(f"{field}: {'OK' if status else 'FAILED'}")
+           
+        
 
-        # Wait 60 seconds before the next synchronization
-        print("\nNext synchronization in 10 seconds...")
+        # Wait 10 seconds before the next synchronization
+        print("\nNext sync in 10 seconds...")
         time.sleep(10)
 
 

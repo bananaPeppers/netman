@@ -1,7 +1,13 @@
+# =====================================================================================================================================================
+# Written by: Samip Kafle
+# Date: Fri Oct 30 2026
+# Description: API to get device updates. device will send updates every 10 seconds to the server 
+# =====================================================================================================================================================
+
+
 from flask import jsonify, request
 from datetime import datetime, timezone
 from api import bp
-from api.postPairingCode import hash_code
 from extensions import db
 from models import Device, PairingCode
 
@@ -20,19 +26,24 @@ def get_device_info():
     action = data.get("action")
 
 
-    # Step 1: Verify pairing code
+    # =====================================================================================================================================================
+    # Step 1: Verify pairing code is valid- check stored code hash from table
+    # =====================================================================================================================================================
     pairing = PairingCode.query.filter_by(
-        code_hash=hash_code(pairing_code)
+        pairing_code=pairing_code
     ).with_for_update().first()
 
+    # if the pairing code is invalid
     if not pairing:
         return jsonify(
             paired=False,
             registered=False,
             error="Invalid pairing code"
         ), 404
-
-    # Step 2: Verify code with device
+    
+    # =====================================================================================================================================================
+    # Step 2: Verify code with device before establishing communication. device sends its stored pairing code to the server and it authenticates it first. 
+    # =====================================================================================================================================================
     if action == "verify":
 
         # if device already registered with that code
@@ -48,30 +59,30 @@ def get_device_info():
             paired=True,
             registered=False
         ), 200
-
+    # =====================================================================================================================================================
     # once device has been verified then proced to sync info 
-
     # Step 3: Synchronize device information
+    # =====================================================================================================================================================
     if action == "sync":
-
+        # get the requred fields
         operating_system = data.get("operating_system")
         ip_address = data.get("ip_address")
         device_name = data.get("device_name")
 
 
-
-        # Check if all fields synced
+        # Check if all fields synced- true. else it returns false
         sync_status = {
             "has_os": bool(operating_system),
             "has_ip": bool(ip_address)
         }
 
-        # Identify missing fields 
+        # Identify missing fields from above boolean. 
         missing_fields = [
             field for field, status in sync_status.items()
             if not status
         ]
 
+        # send back response to client for fields that could not be synced
         if missing_fields:
             return jsonify(
                 synced=False,
@@ -79,12 +90,9 @@ def get_device_info():
                 error=f"Could not sync: {', '.join(missing_fields)}"
             ), 400
 
-
-
-
-        # once the fields are synced-save them in db tables
+        # once the fields are synced-save them in db tables for each device. updates are overwritten. registration will result in initial entry
         try:
-            # First synchronization: register device
+            # if this is the first synchronization: register device and initial entry
             if pairing.device_id is None:
 
                 device = Device(
@@ -101,8 +109,9 @@ def get_device_info():
                 pairing.device_id = device.device_id
                 status = "registered"
 
+
+            # for devices that are alrady pired, it will simply update the entries in its table
             else:
-                # Existing device: onl y update information
                 device = db.session.get(Device, pairing.device_id)
 
                 if not device:
@@ -119,6 +128,9 @@ def get_device_info():
 
             db.session.commit()
 
+
+
+            # send status result response back to the client at the end
             return jsonify(
                 paired=True,
                 registered=True,

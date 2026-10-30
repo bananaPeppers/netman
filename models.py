@@ -51,6 +51,8 @@ class PairingCode(db.Model):
         nullable=True
     )
 
+    pairing_code = db.Column(db.String(8), nullable=False, unique=True)
+
     code_hash = db.Column(db.String(64), nullable=False)
 
     created_at = db.Column(db.DateTime, nullable=False)
