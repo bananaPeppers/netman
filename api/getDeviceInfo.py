@@ -56,6 +56,7 @@ def get_device_info():
 
         operating_system = data.get("operating_system")
         ip_address = data.get("ip_address")
+        device_name = data.get("device_name")
 
 
 
@@ -90,6 +91,7 @@ def get_device_info():
                     user_id=pairing.user_id,
                     operating_system=operating_system,
                     ip_address=ip_address,
+                    device_name=device_name,
                     last_online= datetime.now(timezone.utc)
                 )
 
@@ -111,6 +113,7 @@ def get_device_info():
 
                 device.operating_system = operating_system
                 device.ip_address = ip_address
+                device.device_name = device_name
                 device.last_online = datetime.now(timezone.utc)
                 status = "updated"
 

@@ -138,6 +138,7 @@ def main():
                     print("Device name cannot be empty.")
 
                 print("Device Name:", device_name)
+                save_pairing_code(pairing_code, device_name)
 
             break
 
@@ -175,7 +176,8 @@ def main():
             "action": "sync",
             "pairing_code": pairing_code,
             "operating_system": operating_system,
-            "ip_address": ip_address
+            "ip_address": ip_address,
+            "device_name": device_name
         })
 
         # Step 4: Process server response
