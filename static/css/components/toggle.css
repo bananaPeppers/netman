@@ -1,0 +1,53 @@
+/* iOS-style toggle. Mark up as:
+     <label class="toggle">
+       <input type="checkbox" />
+       <span class="toggle-track"><span class="toggle-thumb"></span></span>
+     </label>
+   The macro in templates/components/toggle.html emits exactly this. */
+.toggle {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-track {
+  display: inline-block;
+  width: 68px;
+  height: 36px;
+  background-color: #3a4a5a;
+  border-radius: 999px;
+  position: relative;
+  transition: background-color 0.2s;
+  vertical-align: middle;
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 28px;
+  height: 28px;
+  background-color: #B0BCC8;
+  border-radius: 50%;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.toggle input:checked + .toggle-track {
+  background-color: #7a9e9a;
+}
+
+.toggle input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(32px);
+  background-color: #E6F0EE;
+}
+
+.toggle input:focus-visible + .toggle-track {
+  outline: 2px solid #7a9e9a;
+  outline-offset: 2px;
+}

@@ -1,13 +1,86 @@
 {% extends "manage/manage.html" %} {% block panel %}
-<div class="panel-header">
-  <div>
-    <h2 class="panel-title">Manage connected network devices</h2>
+{% from "components/popup.html" import popup %}
+{% from "manage/_rules.html" import rules_panel %}
+<div class="split-page">
+  <div class="split-left">
+    <div class="panel-header">
+      <div>
+        <h2 class="panel-title">manage devices</h2>
+      </div>
+      <button class="btn" id="add-device-btn" type="button">+ Add Device</button>
+    </div>
+
+    <div class="device-summary">
+      <div class="summary-total">
+        <span class="summary-title">devices</span>
+        <span class="summary-count">{{ total }}</span>
+      </div>
+      <div class="summary-row">
+        <p class="summary-online">
+          <span class="summary-num">{{ online }}</span> online
+        </p>
+        <p class="summary-offline">
+          <span class="summary-num">{{ offline }}</span> offline
+        </p>
+      </div>
+    </div>
+
+    <div class="split-list" id="device-list">
+      {% for device in devices %}
+      <div
+        class="device-tile"
+        data-device-id="{{ device.device_id }}"
+        data-device-name="{{ device.device_name or '' }}"
+        data-group-id="{{ device.group_id or '' }}"
+      >
+        <p>
+          <span class="device-label">device name:</span>
+          <span class="device-value">{{ device.device_name }}</span>
+        </p>
+        <p>
+          <span class="device-label">ip address:</span>
+          {% if device.last_online and device.last_online >= online_cutoff %}
+          <span class="device-value">{{ device.ip_address }}</span>
+          {% else %}
+          <span class="device-value">-</span>
+          {% endif %}
+        </p>
+        <p>
+          <span class="device-label">Status:</span>
+          {% if device.last_online and device.last_online >= online_cutoff %}
+          <span class="device-value online"
+            ><span class="status-dot online"></span>online</span
+          >
+          {% else %}
+          <span class="device-value offline"
+            ><span class="status-dot offline"></span>offline</span
+          >
+          {% endif %}
+        </p>
+      </div>
+      {% endfor %}
+    </div>
   </div>
-  <button class="add-btn" id="add-device-btn" type="button">
-    + Add Device
-  </button>
+
+  {% call rules_panel("no devices yet", "device", rule_domains, rule_safe_mode) %}
+  <div class="group-assign" id="group-assign" hidden>
+    <span class="group-assign-label">group:</span>
+    <button class="group-assign-btn" id="group-assign-btn" type="button">
+      click to assign to a group
+    </button>
+    <div class="group-menu" id="group-menu" hidden>
+      <button class="group-option" type="button" data-group-id="">no group</button>
+      {% for group in groups %}
+      <button class="group-option" type="button" data-group-id="{{ group.group_id }}">{{ group.group_name }}</button>
+      {% else %}
+      <p class="group-menu-empty">no groups yet, create one on the Groups page</p>
+      {% endfor %}
+    </div>
+  </div>
+  {% endcall %}
 </div>
-<div class="add-popup" id="add-popup">
+
+{% call popup("add-popup") %}
   <p class="popup-text">
     Enter this code in your client app to connect it to your dashboard
   </p>
@@ -17,53 +90,26 @@
     <p class="popup-note">this code is valid only for 5 minutes</p>
   </div>
   <div class="popup-buttons">
-    <button class="add-btn" id="generate-btn" type="button">
+    <button class="btn" id="generate-btn" type="button">
       generate code
     </button>
-    <button class="add-btn" id="close-popup-btn" type="button">close</button>
+    <button class="btn" id="close-popup-btn" type="button">close</button>
   </div>
   <p class="popup-warning" id="popup-warning" hidden>
     remember this code before closing this window <br />
     <br />
     once you pair your device, you can close this window and refresh your screen
   </p>
-</div>
+{% endcall %}
 
-{% include "stats.html" %}
-
-<div class="device-list">
-  {% for device in devices %}
-  <div class="device-tile">
-    <p>
-      <span class="device-label">device name:</span>
-      <span class="device-value">{{ device.device_name }}</span>
-    </p>
-    <p>
-      <span class="device-label">ip address:</span>
-      <span class="device-value">{{ device.ip_address }}</span>
-    </p>
-    <p>
-      <span class="device-label">Status:</span>
-      {% if device.last_online and device.last_online >= online_cutoff %}
-      <span class="device-value online"
-        ><span class="status-dot online"></span>online</span
-      >
-      {% else %}
-      <span class="device-value offline"
-        ><span class="status-dot offline"></span>offline</span
-      >
-      {% endif %}
-    </p>
-  </div>
-  {% endfor %}
-</div>
-
+<script src="{{ url_for('manage.static', filename='js/rules.js') }}"></script>
 <script>
   const popup = document.getElementById("add-popup");
   const codeBox = document.getElementById("code-box");
   const codeText = document.getElementById("pair-code");
   const generateBtn = document.getElementById("generate-btn");
   const warning = document.getElementById("popup-warning");
+  const deviceList = document.getElementById("device-list");
 
   // open the popup on click
   document
@@ -93,5 +139,84 @@
     warning.hidden = true;
     codeText.textContent = "";
   });
+
+  // ----- group assignment (the "group:" control in the name bar) -----
+  const groupAssign = document.getElementById("group-assign");
+  const groupBtn = document.getElementById("group-assign-btn");
+  const groupMenu = document.getElementById("group-menu");
+  const noGroupOption = groupMenu.querySelector('.group-option[data-group-id=""]');
+  let selectedTile = null;
+
+  function renderGroupLabel() {
+    const id = selectedTile ? selectedTile.dataset.groupId : "";
+    const option = id
+      ? groupMenu.querySelector(`.group-option[data-group-id="${id}"]`)
+      : null;
+    const name = option ? option.textContent.trim() : null;
+
+    groupBtn.textContent = name || "click to assign to a group";
+    groupBtn.classList.toggle("assigned", !!name);
+    noGroupOption.hidden = !name;
+    groupMenu.querySelectorAll(".group-option").forEach((o) => {
+      o.classList.toggle("selected", id !== "" && o.dataset.groupId === id);
+    });
+  }
+
+  function closeGroupMenu() {
+    groupMenu.hidden = true;
+  }
+
+  groupBtn.addEventListener("click", () => {
+    groupMenu.hidden = !groupMenu.hidden;
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!groupAssign.contains(e.target)) closeGroupMenu();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeGroupMenu();
+  });
+
+  groupMenu.addEventListener("click", async (e) => {
+    const option = e.target.closest(".group-option");
+    if (!option || !selectedTile) return;
+
+    const tile = selectedTile;
+    const groupId = option.dataset.groupId === "" ? null : Number(option.dataset.groupId);
+    closeGroupMenu();
+
+    try {
+      await RulesPanel.post("/api/manage/setDeviceGroup", {
+        device_id: Number(tile.dataset.deviceId),
+        group_id: groupId,
+      });
+      tile.dataset.groupId = groupId === null ? "" : String(groupId);
+      if (selectedTile === tile) renderGroupLabel();
+    } catch (error) {
+      alert("Error assigning group: " + error.message);
+    }
+  });
+
+  function selectDevice(tile) {
+    deviceList
+      .querySelectorAll(".device-tile.active")
+      .forEach((t) => t.classList.remove("active"));
+    tile.classList.add("active");
+    RulesPanel.select(tile.dataset.deviceId, tile.dataset.deviceName || "unnamed device");
+
+    selectedTile = tile;
+    groupAssign.hidden = false;
+    closeGroupMenu();
+    renderGroupLabel();
+  }
+
+  deviceList.addEventListener("click", (e) => {
+    const tile = e.target.closest(".device-tile");
+    if (tile) selectDevice(tile);
+  });
+
+  const firstDevice = deviceList.querySelector(".device-tile");
+  if (firstDevice) selectDevice(firstDevice);
 </script>
 {% endblock %}

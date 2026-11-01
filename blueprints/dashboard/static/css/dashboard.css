@@ -1,40 +1,180 @@
-.dashboard-page {
+.dashboard-container {
+  flex: 1;
+  display: flex;
+  gap: 30px;
+  padding: 30px;
+}
+
+.sidebar {
+  width: 300px;
+  background-color: #192a3a;
+  border-radius: 30px;
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+}
+
+.network-section {
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #3a4a5a;
+}
+
+.network-label {
+  color: #b0bcc8;
+  font-size: 13px;
+  font-weight: 400;
+  margin: 0 0 8px 0;
+  text-transform: lowercase;
+}
+
+.network-name-text {
+  color: #8FBF8F;
+  font-size: 14px;
+  font-weight: 400;
+  margin: 0;
+}
+
+.divider {
+  display: none;
+}
+
+.devices-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.devices-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 15px;
+  background-color: #13202A;
+  border-radius: 15px;
+  padding: 12px 16px;
+}
+
+.devices-title {
+  color: #e6f0ee;
+  font-size: 16px;
+  font-weight: 400;
+  margin: 0;
+}
+
+.devices-count {
+  color: #b0bcc8;
+  font-size: 16px;
+}
+
+.devices-stats {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+
+.stat-online {
+  color: #8FBF8F;
+  margin: 0;
+  background-color: #13202A;
+  border-radius: 12px;
+  padding: 8px 12px;
+  flex: 1;
+  text-align: center;
+}
+
+.stat-offline {
+  color: #C98F8A;
+  margin: 0;
+  background-color: #13202A;
+  border-radius: 12px;
+  padding: 8px 12px;
+  flex: 1;
+  text-align: center;
+}
+
+.online-count {
+  color: #8FBF8F;
+  font-weight: 600;
+}
+
+.offline-count {
+  color: #C98F8A;
+  font-weight: 600;
+}
+
+.devices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.device-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: transparent;
+  border: 1px solid #415e75;
+  border-radius: 20px;
+  padding: 8px 12px;
+  color: #b0bcc8;
+  font-size: 13px;
+}
+
+.device-name {
+  flex-shrink: 0;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-dot.online {
+  background-color: #8FBF8F;
+}
+
+.status-dot.offline {
+  background-color: #C98F8A;
+}
+
+.offline-mark {
+  color: #C98F8A;
+  font-weight: 600;
+}
+
+.device-ip {
+  flex-grow: 1;
+  text-align: right;
+}
+
+.content-area {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  gap: 20px;
 }
 
-.dashboard-page .stats {
-  align-self: stretch;
-}
-
-.network-header {
-  padding: 20px;
-  display: flex;
-  background-color: #26323c;
-  height: 45px;
-  align-items: center;
-  margin: 20px;
+.content-tile {
+  background-color: #1a2f42;
   border-radius: 15px;
 }
 
-.network-title {
-  color: #e6f0ee;
-  font-size: 18px;
-  font-weight: 400;
-  padding-right: 20px;
+.tile-large {
+  flex: 2;
+  min-height: 200px;
 }
 
-.network-name {
-  color: #b0bcc8;
-  font-size: 18px;
-  padding-right: 20px;
+.tiles-row {
+  flex: 1;
+  display: flex;
+  gap: 20px;
 }
 
-.green {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: #8fbf8f;
+.tiles-row .content-tile {
+  flex: 1;
+  min-height: 200px;
 }

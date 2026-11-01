@@ -1,0 +1,16 @@
+{#
+  Modal popup shell. Usage:
+    {% from "components/popup.html" import popup %}
+    {% call popup("my-popup") %}
+      <p class="popup-text">...</p>
+      <div class="popup-buttons">
+        <button class="btn" type="button">ok</button>
+      </div>
+    {% endcall %}
+  Show/hide by toggling the "open" class on #my-popup.
+#}
+{% macro popup(id) -%}
+<div class="popup" id="{{ id }}" role="dialog" aria-modal="true">
+  {{ caller() }}
+</div>
+{%- endmacro %}

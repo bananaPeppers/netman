@@ -1,0 +1,94 @@
+{# Right-hand rules panel shared by the groups and devices pages. {% from
+"manage/_rules.html" import rules_panel %} {{ rules_panel("no groups yet",
+"group", rule_domains, rule_safe_mode) }} target is "group" or "device". The
+page picks what the panel shows by calling RulesPanel.select(id, name) /
+RulesPanel.clear() from static/js/rules.js. Use {% call rules_panel(...) %}extra
+html{% endcall %} to put an extra control on the right of the name bar. #} {%
+from "components/popup.html" import popup %} {% from "components/toggle.html"
+import toggle %} {% macro rules_panel(empty_label, target, domains, safe_mode)
+-%}
+<div class="split-right">
+  <div class="rules-panel">
+    <div class="rules-name">
+      <span id="rules-name-text">{{ empty_label }}</span>
+      {% if caller is defined %}{{ caller() }}{% endif %}
+    </div>
+
+    <p class="rules-hint">
+      {% if target == "device" %}Any device specific rules applied here will
+      override group presets{% else %}Select presets to apply to this group{%
+      endif %}
+    </p>
+
+    <div class="rules-tiles">
+      <section class="rule-tile rule-tile-xl">
+        <h3 class="rule-title">Domain/Website Block</h3>
+        <div class="domain-add-row">
+          <input
+            type="text"
+            id="domain-input"
+            class="input-field domain-input"
+            placeholder="enter domain name"
+          />
+          <button
+            class="domain-save-btn"
+            id="domain-save-btn"
+            type="button"
+            aria-label="Add domain"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="4 12.5 9.5 18 20 6"></polyline>
+            </svg>
+          </button>
+        </div>
+        <div class="domain-list" id="domain-list"></div>
+      </section>
+
+      <section class="rule-tile rule-tile-sm safe-mode">
+        <h3 class="rule-title">safe mode</h3>
+        <div class="safe-mode-row">
+          {{ toggle("safe-mode-toggle") }}
+          <p class="safe-mode-desc">
+            enabling safe mode blocks adult contents<br />and piracy sites
+          </p>
+        </div>
+      </section>
+
+      <section class="rule-tile rule-tile-lg">
+        <h3 class="rule-title">Internet access schedule</h3>
+      </section>
+
+      <section class="rule-tile rule-tile-sm">
+        <h3 class="rule-title">bandwidth limit</h3>
+      </section>
+    </div>
+  </div>
+</div>
+
+{% call popup("delete-domain-popup") %}
+<p class="popup-text">
+  Are you sure you want to delete <span id="delete-domain-name"></span>?
+</p>
+<div class="popup-buttons">
+  <button class="btn" id="confirm-delete-domain-btn" type="button">
+    delete
+  </button>
+  <button class="btn" id="cancel-delete-domain-btn" type="button">
+    cancel
+  </button>
+</div>
+{% endcall %}
+
+<script id="rules-data" type="application/json">
+  {{ {"target": target, "domains": domains, "safeMode": safe_mode} | tojson }}
+</script>
+{%- endmacro %}

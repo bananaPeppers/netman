@@ -4,12 +4,49 @@
   href="{{ url_for('dashboard.static', filename='css/dashboard.css') }}"
 />
 {% endblock %} {% block page %}
-<div class="dashboard-page">
-<div class="network-header">
-  <h2 class="network-title">My Network:</h2>
-  <p class="network-name">{{ network }}</p>
-  <div class="green"></div>
-</div>
-{% include "stats.html" %}
+<div class="dashboard-container">
+  <div class="sidebar">
+    <div class="network-section">
+      <h3 class="network-label">network</h3>
+      <p class="network-name-text">{{ network }}</p>
+      <div class="divider"></div>
+    </div>
+
+    <div class="devices-panel">
+      <div class="devices-header">
+        <h2 class="devices-title">devices</h2>
+        <span class="devices-count">{{ total }}</span>
+      </div>
+      <div class="devices-stats">
+        <p class="stat-online">
+          <span class="online-count">{{ online }}</span> online
+        </p>
+        <p class="stat-offline">
+          <span class="offline-count">{{ offline }}</span> offline
+        </p>
+      </div>
+      <div class="devices-list">
+        {% for device in devices %}
+        <div class="device-pill">
+          <span class="device-name">{{ device.device_name }}</span>
+          <span
+            class="status-dot {% if device.last_online and device.last_online >= online_cutoff %}online{% else %}offline{% endif %}"
+          ></span>
+          <span class="device-ip">
+            {% if device.last_online and device.last_online >= online_cutoff %}{{ device.ip_address }}{% else %}device offline <span class="offline-mark">!</span>{% endif %}
+          </span>
+        </div>
+
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="content-area">
+    <div class="content-tile tile-large"></div>
+    <div class="tiles-row">
+      <div class="content-tile"></div>
+      <div class="content-tile"></div>
+    </div>
+  </div>
 </div>
 {% endblock %}

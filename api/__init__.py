@@ -13,3 +13,7 @@ bp = Blueprint("api", __name__, url_prefix="/api")
 # import the endpoint files last, so they can use bp (importing registers their routes)
 from api import postPairingCode  # noqa: E402,F401
 from api import getDeviceInfo  # noqa: E402,F401
+from api import postGroup  # noqa: E402,F401
+from api import postBlockedDomain  # noqa: E402,F401
+from api import postSafeMode  # noqa: E402,F401
+from api import postDeviceGroup  # noqa: E402,F401

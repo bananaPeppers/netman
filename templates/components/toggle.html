@@ -1,0 +1,19 @@
+{#
+  iOS-style toggle switch. Usage:
+    {% from "components/toggle.html" import toggle %}
+    {{ toggle("safe-mode-toggle", checked=False) }}
+  The hidden <input type="checkbox"> has the given id, so bind change events to it:
+    document.getElementById("safe-mode-toggle").addEventListener("change", ...);
+  Checked state is read from .checked, same as any checkbox.
+#}
+{% macro toggle(id, checked=False, name=None) -%}
+<label class="toggle" for="{{ id }}">
+  <input
+    type="checkbox"
+    id="{{ id }}"
+    {% if name %}name="{{ name }}"{% endif %}
+    {% if checked %}checked{% endif %}
+  />
+  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+</label>
+{%- endmacro %}

@@ -1,0 +1,21 @@
+/* Text input matching the login page's style: dark pill, light border. */
+.input-field {
+  height: 38px;
+  border-radius: 15px;
+  border: 1px solid #7f95a8;
+  background-color: #36414b;
+  padding-left: 15px;
+  color: white;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.input-field::placeholder {
+  color: gray;
+  font-size: 16px;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #7a9e9a;
+}

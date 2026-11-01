@@ -1,0 +1,70 @@
+/* Centered modal shell. Use the popup() macro to build it, toggle .open to show. */
+.popup {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 380px;
+  padding: 25px;
+  text-align: center;
+  background-color: #26323c;
+  border: 1px solid #7f95a8;
+  border-radius: 15px;
+  z-index: 100;
+  /* dims the page behind the popup */
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
+}
+
+.popup.open {
+  display: flex;
+}
+
+.popup-text {
+  color: #b0bcc8;
+  font-size: 14px;
+}
+
+.popup-label {
+  color: #7a9e9a;
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+
+.popup-note {
+  color: #b0bcc8;
+  font-size: 12px;
+}
+
+.popup-warning {
+  color: #e6f0ee;
+  font-size: 12px;
+}
+
+.popup-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.popup-input {
+  width: 100%;
+  padding: 10px 15px;
+  background-color: #1a2332;
+  border: 1px solid #3a4a5a;
+  border-radius: 8px;
+  color: #e6f0ee;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.popup-input::placeholder {
+  color: #7a9e9a;
+}
+
+.popup-input:focus {
+  outline: none;
+  border-color: #7a9e9a;
+}

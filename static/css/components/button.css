@@ -1,0 +1,17 @@
+/* Button used across the site: solid teal pill, 32px tall. Apply .btn to a <button>. */
+.btn {
+  background-color: #7a9e9a;
+  color: #e6f0ee;
+  border: none;
+  height: 32px;
+  padding: 0 15px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

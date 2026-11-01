@@ -1,1 +1,189 @@
-{% extends "manage/manage.html" %} {% block panel %}{% endblock %}
+{% extends "manage/manage.html" %} {% block panel %}
+{% from "components/popup.html" import popup %}
+{% from "manage/_rules.html" import rules_panel %}
+<div class="split-page">
+  <div class="split-left">
+    <div class="panel-header">
+      <div>
+        <h2 class="panel-title">manage groups</h2>
+      </div>
+      <button class="btn" id="add-group-btn" type="button">+ Add Group</button>
+    </div>
+
+    <div class="split-list" id="groups-list">
+      {% for group in groups %}
+      <div class="group-tile" data-group-id="{{ group.group_id }}">
+        <span class="group-name">{{ group.group_name }}</span>
+        <button class="group-delete" type="button" aria-label="Delete group">&times;</button>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {{ rules_panel("no groups yet", "group", rule_domains, rule_safe_mode) }}
+</div>
+
+{% call popup("add-popup") %}
+  <p class="popup-text">Enter group name</p>
+  <input
+    type="text"
+    id="group-name-input"
+    class="popup-input"
+    placeholder="Group name"
+  />
+  <div class="popup-buttons">
+    <button class="btn" id="create-btn" type="button">create</button>
+    <button class="btn" id="close-popup-btn" type="button">close</button>
+  </div>
+{% endcall %}
+
+{% call popup("delete-popup") %}
+  <p class="popup-text">
+    Are you sure you want to delete <span id="delete-group-name"></span>?
+  </p>
+  <div class="popup-buttons">
+    <button class="btn" id="confirm-delete-btn" type="button">delete</button>
+    <button class="btn" id="cancel-delete-btn" type="button">cancel</button>
+  </div>
+{% endcall %}
+
+<script src="{{ url_for('manage.static', filename='js/rules.js') }}"></script>
+<script>
+  const popup = document.getElementById("add-popup");
+  const addGroupBtn = document.getElementById("add-group-btn");
+  const closePopupBtn = document.getElementById("close-popup-btn");
+  const createBtn = document.getElementById("create-btn");
+  const groupNameInput = document.getElementById("group-name-input");
+  const groupsList = document.getElementById("groups-list");
+
+  const deletePopup = document.getElementById("delete-popup");
+  const deleteGroupName = document.getElementById("delete-group-name");
+  const confirmDeleteBtn = document.getElementById("confirm-delete-btn");
+  const cancelDeleteBtn = document.getElementById("cancel-delete-btn");
+  let tileToDelete = null;
+
+  function selectGroup(tile) {
+    groupsList
+      .querySelectorAll(".group-tile.active")
+      .forEach((t) => t.classList.remove("active"));
+    tile.classList.add("active");
+    RulesPanel.select(
+      tile.dataset.groupId,
+      tile.querySelector(".group-name").textContent.trim()
+    );
+  }
+
+  // one listener handles every tile, including ones added later
+  groupsList.addEventListener("click", (e) => {
+    const tile = e.target.closest(".group-tile");
+    if (!tile) return;
+
+    if (e.target.closest(".group-delete")) {
+      tileToDelete = tile;
+      deleteGroupName.textContent = tile.querySelector(".group-name").textContent.trim();
+      deletePopup.classList.add("open");
+      return;
+    }
+    selectGroup(tile);
+  });
+
+  function buildTile(id, name) {
+    const tile = document.createElement("div");
+    tile.className = "group-tile";
+    tile.dataset.groupId = id;
+
+    const label = document.createElement("span");
+    label.className = "group-name";
+    label.textContent = name;
+
+    const del = document.createElement("button");
+    del.className = "group-delete";
+    del.type = "button";
+    del.setAttribute("aria-label", "Delete group");
+    del.innerHTML = "&times;";
+
+    tile.append(label, del);
+    return tile;
+  }
+
+  addGroupBtn.addEventListener("click", () => {
+    popup.classList.add("open");
+    groupNameInput.focus();
+    groupNameInput.value = "";
+  });
+
+  closePopupBtn.addEventListener("click", () => {
+    popup.classList.remove("open");
+  });
+
+  createBtn.addEventListener("click", async () => {
+    const groupName = groupNameInput.value.trim();
+    if (!groupName) {
+      alert("Group name cannot be empty");
+      return;
+    }
+
+    try {
+      createBtn.disabled = true;
+      const res = await fetch("/api/manage/createGroup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ group_name: groupName }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create group");
+
+      const newTile = buildTile(data.group_id, data.group_name);
+      groupsList.appendChild(newTile);
+      if (!groupsList.querySelector(".group-tile.active")) selectGroup(newTile);
+
+      popup.classList.remove("open");
+    } catch (error) {
+      alert("Error creating group: " + error.message);
+    } finally {
+      createBtn.disabled = false;
+    }
+  });
+
+  groupNameInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") createBtn.click();
+  });
+
+  cancelDeleteBtn.addEventListener("click", () => {
+    deletePopup.classList.remove("open");
+    tileToDelete = null;
+  });
+
+  confirmDeleteBtn.addEventListener("click", async () => {
+    if (!tileToDelete) return;
+    try {
+      confirmDeleteBtn.disabled = true;
+      const res = await fetch("/api/manage/deleteGroup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ group_id: Number(tileToDelete.dataset.groupId) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete group");
+
+      const wasActive = tileToDelete.classList.contains("active");
+      tileToDelete.remove();
+      if (wasActive) {
+        const next = groupsList.querySelector(".group-tile");
+        if (next) selectGroup(next);
+        else RulesPanel.clear();
+      }
+      deletePopup.classList.remove("open");
+      tileToDelete = null;
+    } catch (error) {
+      alert("Error deleting group: " + error.message);
+    } finally {
+      confirmDeleteBtn.disabled = false;
+    }
+  });
+
+  const firstGroup = groupsList.querySelector(".group-tile");
+  if (firstGroup) selectGroup(firstGroup);
+</script>
+{% endblock %}

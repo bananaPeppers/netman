@@ -31,6 +31,66 @@ class Device(db.Model):
 
     last_online = db.Column(db.DateTime, nullable=True)
 
+    # group this device is assigned to; cleared automatically if that group is deleted
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("groups.group_id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
+
+# Device groups table, one set of groups per network
+class Group(db.Model):
+    __tablename__ = "groups"
+    __table_args__ = (
+        db.UniqueConstraint("network", "group_name", name="unique_network_group"),
+    )
+
+    group_id = db.Column(db.Integer, primary_key=True)
+    network = db.Column(db.String(100), nullable=False)
+    group_name = db.Column(db.String(100), nullable=False)
+
+
+# Domains blocked for either one device group or one device (never both)
+class BlockedDomain(db.Model):
+    __tablename__ = "blocked_domains"
+    __table_args__ = (
+        db.UniqueConstraint("group_id", "domain", name="unique_group_domain"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("groups.group_id", ondelete="CASCADE"),
+        nullable=True,
+    )
+    device_id = db.Column(
+        db.Integer,
+        db.ForeignKey("devices.device_id", ondelete="CASCADE"),
+        nullable=True,
+    )
+    domain = db.Column(db.String(255), nullable=False)
+
+
+# Safe mode flag for either one group or one device (never both)
+class SafeMode(db.Model):
+    __tablename__ = "safe_mode"
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("groups.group_id", ondelete="CASCADE"),
+        nullable=True,
+        unique=True,
+    )
+    device_id = db.Column(
+        db.Integer,
+        db.ForeignKey("devices.device_id", ondelete="CASCADE"),
+        nullable=True,
+        unique=True,
+    )
+    enabled = db.Column(db.Boolean, nullable=False, default=False)
+
 
 # Pairing codes table
 class PairingCode(db.Model):
