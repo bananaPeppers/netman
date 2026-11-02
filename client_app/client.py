@@ -13,9 +13,6 @@ import time
 from pathlib import Path
 
 
-
-
-
 # =====================================================================================================================================================
 # configuration 
 # =====================================================================================================================================================
@@ -206,7 +203,7 @@ def main():
             return 0
 
      
-    #********** at this point the client should have 1: established connection to the server and 2: registered and or paired the device with the server **********#
+    #at this point the client should have 1: established connection to the server and 2: registered and or paired the device with the server **********#
 
    
     # -----------------------------------------------Step 2: Synchronize device information every 10 seconds---------------------------
