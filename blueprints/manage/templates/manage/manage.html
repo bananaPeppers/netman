@@ -14,4 +14,9 @@
   href="{{ url_for('manage.manage', section='groups') }}"
   >Groups</a
 >
+<a
+  class="nav-btn {{ 'active' if section == 'security' }}"
+  href="{{ url_for('manage.manage', section='security') }}"
+  >Security</a
+>
 {% endblock %}
