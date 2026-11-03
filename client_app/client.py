@@ -206,7 +206,7 @@ def main():
     #at this point the client should have 1: established connection to the server and 2: registered and or paired the device with the server **********#
 
    
-    # -----------------------------------------------Step 2: Synchronize device information every 10 seconds---------------------------
+    # -----------------------------------------------Step 2: Synchronize  every 10 seconds---------------------------
     while True:
         operating_system = get_os()
         ip_address = get_ip()
@@ -235,9 +235,9 @@ def main():
            
         
 
-        # Wait 10 seconds before the next synchronization
+        # Wait 5 seconds before the next synchronization
         print("\nNext sync in 10 seconds...")
-        time.sleep(10)
+        time.sleep(5)
 
 
 if __name__ == "__main__":
