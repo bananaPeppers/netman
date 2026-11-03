@@ -1,5 +1,33 @@
 {% extends "manage/manage.html" %} {% block panel %}
-<div class="panel-header">
-  <h2 class="panel-title">security</h2>
+<div class="security-page">
+  <h2 class="security-title">security</h2>
+
+  <div class="security-body">
+    <div class="security-left">
+      <div class="activity-bar">
+        <span class="activity-label"
+          >Activity since: <span class="activity-time">{{ since }}</span></span
+        >
+        <span class="activity-window">Past 1 hour</span>
+      </div>
+
+      <div class="traffic-row">
+        <div class="traffic-tile">
+          <span class="traffic-label">inbound<br />packets:</span>
+          <span class="traffic-value">-</span>
+        </div>
+        <div class="traffic-tile">
+          <span class="traffic-label">outbound<br />packets:</span>
+          <span class="traffic-value">-</span>
+        </div>
+      </div>
+
+      <div class="security-tile traffic-detail"></div>
+    </div>
+
+    <div class="security-tile agent-tile">
+      <h3 class="security-tile-title">Security Agent</h3>
+    </div>
+  </div>
 </div>
 {% endblock %}

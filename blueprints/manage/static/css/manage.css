@@ -529,3 +529,96 @@ body:has(.split-page) .panel {
   line-height: 1.4;
 }
 
+
+/* security page: left column of activity tiles, right column for the security agent */
+.security-page {
+  padding: 15px 25px 25px 11px;
+}
+
+.security-title {
+  margin: 0 0 33px;
+  color: #e6f0ee;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.security-body {
+  display: flex;
+  gap: 62px;
+  padding-left: 14px;
+}
+
+.security-left {
+  width: 442px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.activity-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #1A2B36;
+  border-radius: 20px;
+  padding: 7px 14px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 17px;
+  color: #A7B8C6;
+}
+
+.activity-time {
+  color: #e6f0ee;
+}
+
+.activity-window {
+  color: #7B9D99;
+}
+
+.traffic-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.traffic-tile {
+  width: 201px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #1A2B36;
+  border-radius: 20px;
+  padding: 0 14px;
+  height: 43px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 17px;
+  line-height: 1.05;
+  color: #e6f0ee;
+}
+
+.traffic-value {
+  color: #A7B8C6;
+}
+
+.security-tile {
+  background-color: #1A2B36;
+  border-radius: 30px;
+}
+
+.traffic-detail {
+  height: 262px;
+  margin-top: 10px;
+}
+
+.agent-tile {
+  width: 442px;
+  height: 375px;
+  padding: 10px 24px;
+}
+
+.security-tile-title {
+  margin: 0;
+  color: #A7B8C6;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 17px;
+  font-weight: 400;
+}

@@ -108,7 +108,7 @@ def main():
     # get active network interface
     interface = get_interface()
 
-    # if no active interface fcund
+    # if no active interface fOund
     if not interface:
         print("No active network interface found.")
         print("Exiting...")

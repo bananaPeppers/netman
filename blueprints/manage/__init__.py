@@ -52,6 +52,15 @@ def network_groups():
     return Group.query.filter_by(network=network).order_by(Group.group_id).all()
 
 
+EST = timezone(timedelta(hours=-5), "EST")
+
+
+# start of the "past 1 hour" activity window, eg. "10:15 EST"
+def activity_since():
+    since = datetime.now(EST) - timedelta(hours=1)
+    return since.strftime("%H:%M %Z")
+
+
 @bp.route("", defaults={"section": "devices"})
 @bp.route("/<section>")
 def manage(section):
@@ -73,4 +82,6 @@ def manage(section):
         context["rule_domains"], context["rule_safe_mode"] = rules_data(
             "group_id", [g.group_id for g in groups]
         )
+    elif section == "security":
+        context["since"] = activity_since()
     return render_section("manage", section, **context)
