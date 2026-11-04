@@ -10,6 +10,8 @@ import json
 import psutil
 import ipaddress
 import time
+import threading
+import queue
 from pathlib import Path
 
 
@@ -22,6 +24,17 @@ SERVER_URL = "http://127.0.0.1:5000/api/pairing/deviceInfo"
 
 # Local configuration to save the config file locally
 CONFIG_FILE = Path.home() / ".client_config.json"
+
+# listen on tcp port 5002 for network packets sent by the monitor
+LISTEN_HOST = "127.0.0.1"
+LISTEN_PORT = 5002
+
+# Queue for network stats received from monitor
+network_queue = queue.Queue()
+
+# Heartbeat interval
+HEARTBEAT_INTERVAL = 5
+
 
 
 
@@ -61,8 +74,10 @@ def save_config(key, value):
     with open(CONFIG_FILE, "w") as file:
         json.dump(config, file, indent=4)
 
+
+
 # =====================================================================================================================================================
-# connection request to server. 
+# connection request to server.
 # =====================================================================================================================================================
   
 def send_request(payload):
@@ -128,7 +143,7 @@ def get_ip():
 
 
 # =====================================================================================================================================================
-# registering, pairing and authentication
+# registering, pairing
 # =====================================================================================================================================================
 
 def registerDevice():
@@ -173,6 +188,32 @@ def verifyDevice(pairing_code):
 
 
 # =====================================================================================================================================================
+# heart beat sync every 5 sec
+# =====================================================================================================================================================
+def heartbeat_sync(pairing_code, device_name):
+
+    while True:
+        response = send_request({
+            "action": "sync",
+            "pairing_code": pairing_code,
+            "operating_system": get_os(),
+            "ip_address": get_ip(),
+            "device_name": device_name
+        })
+
+        if not response.get("synced"):
+            print("Heartbeat sync failed:", response.get("error"))
+        else:
+            print("Heartbeat sync successful")
+
+        time.sleep(HEARTBEAT_INTERVAL)
+
+# =====================================================================================================================================================
+# listen on TCP port 5002 for network stats and send it to the server
+# =====================================================================================================================================================
+
+
+# =====================================================================================================================================================
 # Main client function to process the info and talk with the server
 # =====================================================================================================================================================
 def main():
@@ -206,7 +247,7 @@ def main():
     #at this point the client should have 1: established connection to the server and 2: registered and or paired the device with the server **********#
 
    
-    # -----------------------------------------------Step 2: Synchronize  every 10 seconds---------------------------
+    # -----------------------------------------------Step 2: Synchronize  every 5 seconds---------------------------
     while True:
         operating_system = get_os()
         ip_address = get_ip()
