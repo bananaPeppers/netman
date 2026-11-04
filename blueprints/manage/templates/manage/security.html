@@ -62,38 +62,38 @@
           <div class="stats-col">
             <div class="stat-line">
               <span class="stat-label">inbound<br />packets</span>
-              <span class="stat-value">-</span>
+              <span class="stat-value" data-stat="in-packets">-</span>
             </div>
             <div class="stat-line">
               <span class="stat-label">Bytes</span>
-              <span class="stat-value">-</span>
+              <span class="stat-value" data-stat="in-bytes">-</span>
             </div>
             <div class="stat-line">
               <span class="stat-label">TCP</span>
-              <span class="stat-value">-</span>
+              <span class="stat-value" data-stat="tcp">-</span>
             </div>
             <div class="stat-line">
               <span class="stat-label">UDP</span>
-              <span class="stat-value">-</span>
+              <span class="stat-value" data-stat="udp">-</span>
             </div>
           </div>
 
           <div class="stats-col stats-col-right">
             <div class="stat-line">
               <span class="stat-label">outbound<br />packets</span>
-              <span class="stat-value">-</span>
+              <span class="stat-value" data-stat="out-packets">-</span>
             </div>
             <div class="stat-line">
               <span class="stat-label">Bytes</span>
-              <span class="stat-value">-</span>
+              <span class="stat-value" data-stat="out-bytes">-</span>
             </div>
             <div class="stat-line">
               <span class="stat-label">TCP</span>
-              <span class="stat-value">-</span>
+              <span class="stat-value" data-stat="tcp">-</span>
             </div>
             <div class="stat-line">
               <span class="stat-label">UDP</span>
-              <span class="stat-value">-</span>
+              <span class="stat-value" data-stat="udp">-</span>
             </div>
           </div>
         </div>
@@ -114,19 +114,22 @@
 </div>
 
 <script>
-  // select a device tile (data wiring comes later)
   const secList = document.getElementById("sec-device-list");
-  secList.addEventListener("click", (e) => {
-    const tile = e.target.closest(".sec-device-tile");
-    if (!tile) return;
-    secList
-      .querySelectorAll(".sec-device-tile.active")
-      .forEach((t) => t.classList.remove("active"));
-    tile.classList.add("active");
-  });
+  const activityTime = document.querySelector(".activity-time");
+  const activityCount = document.querySelector(".activity-count");
+
+  // ----- helpers -----
+  function selectedDeviceId() {
+    const tile = secList.querySelector(".sec-device-tile.active");
+    return tile ? tile.dataset.deviceId : null;
+  }
+
+  function selectedMinutes() {
+    const pill = document.querySelector(".range-pill.active");
+    return pill ? Number(pill.dataset.minutes) : 10;
+  }
 
   // "Activity since" time for a range, in EST (UTC-5), formatted "HH:MM EST"
-  const activityTime = document.querySelector(".activity-time");
   function sinceLabel(minutes) {
     const est = new Date(Date.now() - (5 * 60 + minutes) * 60 * 1000);
     const hh = String(est.getUTCHours()).padStart(2, "0");
@@ -134,21 +137,91 @@
     return `${hh}:${mm} EST`;
   }
 
-  // range pills: highlight and update the activity-since time
+  const nf = new Intl.NumberFormat("en-US");
+
+  function fmtBytes(n) {
+    if (n < 1024) return nf.format(n) + " B";
+    const units = ["KB", "MB", "GB", "TB"];
+    let v = n / 1024;
+    let i = 0;
+    while (v >= 1024 && i < units.length - 1) {
+      v /= 1024;
+      i++;
+    }
+    return v.toFixed(v >= 100 ? 0 : 1) + " " + units[i];
+  }
+
+  function setStat(key, value) {
+    document
+      .querySelectorAll(`.stat-value[data-stat="${key}"]`)
+      .forEach((el) => (el.textContent = value));
+  }
+
+  function clearStats(placeholder) {
+    ["in-packets", "in-bytes", "out-packets", "out-bytes", "tcp", "udp"].forEach(
+      (k) => setStat(k, placeholder)
+    );
+    activityCount.textContent = placeholder;
+  }
+
+  // ----- load stats for the selected device + range -----
+  async function loadStats() {
+    activityTime.textContent = sinceLabel(selectedMinutes());
+
+    const deviceId = selectedDeviceId();
+    if (!deviceId) {
+      clearStats("-");
+      return;
+    }
+
+    clearStats("...");
+    try {
+      const res = await fetch("/api/security/stats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          device_id: Number(deviceId),
+          minutes: selectedMinutes(),
+        }),
+      });
+      if (!res.ok) throw new Error(res.status);
+      const d = await res.json();
+
+      activityCount.textContent = nf.format(d.total_connections);
+      setStat("in-packets", nf.format(d.inbound.packets));
+      setStat("in-bytes", fmtBytes(d.inbound.bytes));
+      setStat("out-packets", nf.format(d.outbound.packets));
+      setStat("out-bytes", fmtBytes(d.outbound.bytes));
+      setStat("tcp", nf.format(d.tcp));
+      setStat("udp", nf.format(d.udp));
+    } catch {
+      clearStats("—");
+    }
+  }
+
+  // ----- device selection -----
+  secList.addEventListener("click", (e) => {
+    const tile = e.target.closest(".sec-device-tile");
+    if (!tile) return;
+    secList
+      .querySelectorAll(".sec-device-tile.active")
+      .forEach((t) => t.classList.remove("active"));
+    tile.classList.add("active");
+    loadStats();
+  });
+
+  // ----- range pills -----
   document.querySelectorAll(".range-pill").forEach((pill) => {
     pill.addEventListener("click", () => {
       document
         .querySelectorAll(".range-pill.active")
         .forEach((p) => p.classList.remove("active"));
       pill.classList.add("active");
-      activityTime.textContent = sinceLabel(Number(pill.dataset.minutes));
+      loadStats();
     });
   });
 
-  // set the initial time from the default-selected pill
-  const activePill = document.querySelector(".range-pill.active");
-  if (activePill) {
-    activityTime.textContent = sinceLabel(Number(activePill.dataset.minutes));
-  }
+  // initial load (default device + range)
+  loadStats();
 </script>
 {% endblock %}

@@ -17,3 +17,4 @@ from api import postGroup  # noqa: E402,F401
 from api import postBlockedDomain  # noqa: E402,F401
 from api import postSafeMode  # noqa: E402,F401
 from api import postDeviceGroup  # noqa: E402,F401
+from api import getSecurityStats  # noqa: E402,F401
