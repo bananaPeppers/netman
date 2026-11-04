@@ -1,33 +1,154 @@
 {% extends "manage/manage.html" %} {% block panel %}
 <div class="security-page">
-  <h2 class="security-title">security</h2>
-
   <div class="security-body">
+    <!-- left: device list -->
     <div class="security-left">
-      <div class="activity-bar">
-        <span class="activity-label"
-          >Activity since: <span class="activity-time">{{ since }}</span></span
+      <h2 class="security-title">security</h2>
+      <div class="sec-device-list" id="sec-device-list">
+        {% for device in devices %}
+        <button
+          class="sec-device-tile {{ 'active' if loop.first }}"
+          type="button"
+          data-device-id="{{ device.device_id }}"
         >
-        <span class="activity-window">Past 1 hour</span>
+          <span class="sec-device-name"
+            >{{ device.device_name or 'unnamed device' }}</span
+          >
+          {% if device.last_online and device.last_online >= online_cutoff %}
+          <span class="sec-status-dot online"></span>
+          <span class="sec-device-ip">{{ device.ip_address or '-' }}</span>
+          {% else %}
+          <span class="sec-status-dot offline"></span>
+          <span class="sec-device-ip">-</span>
+          {% endif %}
+        </button>
+        {% else %}
+        <p class="sec-empty">no devices yet</p>
+        {% endfor %}
       </div>
-
-      <div class="traffic-row">
-        <div class="traffic-tile">
-          <span class="traffic-label">inbound<br />packets:</span>
-          <span class="traffic-value">-</span>
-        </div>
-        <div class="traffic-tile">
-          <span class="traffic-label">outbound<br />packets:</span>
-          <span class="traffic-value">-</span>
-        </div>
-      </div>
-
-      <div class="security-tile traffic-detail"></div>
     </div>
 
-    <div class="security-tile agent-tile">
-      <h3 class="security-tile-title">Security Agent</h3>
+    <!-- right: 2x2 grid of tiles -->
+    <div class="security-grid">
+      <!-- tile 1: range + activity stats -->
+      <div class="sec-tile sec-stats-tile">
+        <div class="range-row">
+          <span class="range-label">Range</span>
+          <button class="range-pill active" type="button" data-minutes="10">
+            10 min
+          </button>
+          <button class="range-pill" type="button" data-minutes="30">
+            30 min
+          </button>
+          <button class="range-pill" type="button" data-minutes="60">
+            1 hr
+          </button>
+          <button class="range-pill" type="button" data-minutes="1440">
+            24 hr
+          </button>
+        </div>
+
+        <div class="activity-row">
+          <span class="activity-since"
+            >Activity since:
+            <span class="activity-time">{{ since }}</span></span
+          >
+          <span class="activity-total"
+            >total connections: <span class="activity-count">-</span></span
+          >
+        </div>
+
+        <div class="stats-cols">
+          <div class="stats-col">
+            <div class="stat-line">
+              <span class="stat-label">inbound<br />packets</span>
+              <span class="stat-value">-</span>
+            </div>
+            <div class="stat-line">
+              <span class="stat-label">Bytes</span>
+              <span class="stat-value">-</span>
+            </div>
+            <div class="stat-line">
+              <span class="stat-label">TCP</span>
+              <span class="stat-value">-</span>
+            </div>
+            <div class="stat-line">
+              <span class="stat-label">UDP</span>
+              <span class="stat-value">-</span>
+            </div>
+          </div>
+
+          <div class="stats-col stats-col-right">
+            <div class="stat-line">
+              <span class="stat-label">outbound<br />packets</span>
+              <span class="stat-value">-</span>
+            </div>
+            <div class="stat-line">
+              <span class="stat-label">Bytes</span>
+              <span class="stat-value">-</span>
+            </div>
+            <div class="stat-line">
+              <span class="stat-label">TCP</span>
+              <span class="stat-value">-</span>
+            </div>
+            <div class="stat-line">
+              <span class="stat-label">UDP</span>
+              <span class="stat-value">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- tile 2: traffic chart (placeholder) -->
+      <div class="sec-tile sec-chart-tile"></div>
+
+      <!-- tile 3: IDS flags (placeholder) -->
+      <div class="sec-tile sec-ids-tile">
+        <h3 class="sec-tile-title">IDS flags</h3>
+      </div>
+
+      <!-- tile 4: placeholder -->
+      <div class="sec-tile sec-blank-tile"></div>
     </div>
   </div>
 </div>
+
+<script>
+  // select a device tile (data wiring comes later)
+  const secList = document.getElementById("sec-device-list");
+  secList.addEventListener("click", (e) => {
+    const tile = e.target.closest(".sec-device-tile");
+    if (!tile) return;
+    secList
+      .querySelectorAll(".sec-device-tile.active")
+      .forEach((t) => t.classList.remove("active"));
+    tile.classList.add("active");
+  });
+
+  // "Activity since" time for a range, in EST (UTC-5), formatted "HH:MM EST"
+  const activityTime = document.querySelector(".activity-time");
+  function sinceLabel(minutes) {
+    const est = new Date(Date.now() - (5 * 60 + minutes) * 60 * 1000);
+    const hh = String(est.getUTCHours()).padStart(2, "0");
+    const mm = String(est.getUTCMinutes()).padStart(2, "0");
+    return `${hh}:${mm} EST`;
+  }
+
+  // range pills: highlight and update the activity-since time
+  document.querySelectorAll(".range-pill").forEach((pill) => {
+    pill.addEventListener("click", () => {
+      document
+        .querySelectorAll(".range-pill.active")
+        .forEach((p) => p.classList.remove("active"));
+      pill.classList.add("active");
+      activityTime.textContent = sinceLabel(Number(pill.dataset.minutes));
+    });
+  });
+
+  // set the initial time from the default-selected pill
+  const activePill = document.querySelector(".range-pill.active");
+  if (activePill) {
+    activityTime.textContent = sinceLabel(Number(activePill.dataset.minutes));
+  }
+</script>
 {% endblock %}

@@ -84,4 +84,11 @@ def manage(section):
         )
     elif section == "security":
         context["since"] = activity_since()
+        context["devices"] = Device.query.filter_by(
+            user_id=session["user_id"]
+        ).all()
+        # a device seen since this time counts as online
+        context["online_cutoff"] = datetime.now(timezone.utc).replace(
+            tzinfo=None
+        ) - timedelta(minutes=ONLINE_WINDOW_MINUTES)
     return render_section("manage", section, **context)

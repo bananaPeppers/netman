@@ -23,7 +23,7 @@ INTERVAL = 5
 # Store CSV in the same directory as monitor.py
 CSV_FILE = Path(__file__).resolve().parent / "logs.csv"
 
-# these queues store output stream for client adn security separately
+# these queues store output stream for client and security separately
 security_queue = queue.Queue(maxsize=1000)
 client_queue = queue.Queue(maxsize=1000)
 

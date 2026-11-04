@@ -209,9 +209,6 @@ def heartbeat_sync(pairing_code, device_name):
 
         time.sleep(HEARTBEAT_INTERVAL)
 
-# =====================================================================================================================================================
-# listen on TCP port 5002 for network stats and send it to the server
-# =====================================================================================================================================================
 
 # =====================================================================================================================================================
 # listen on TCP port 5002 for network stats and send it to the server
@@ -299,7 +296,7 @@ def main():
     if not initial_sync(pairing_code, device_name):
         return
      
-    #at this point the client should have 1: established connection to the server and 2: registered and or paired the device with the server **********#
+    #at this point the client should have 1: established connection to the server and 2: registered and or paired the device with the server 
 
    
     # ------------------------------------------------------------------process 1: heartbeat sync process----------------------------------------------
@@ -314,12 +311,11 @@ def main():
         args=(pairing_code,)
     )
 
-
-   # ------------------------------------------------------------------process 3: security sync process------------------------------------------------
- 
+    # ------------------------------------------------------------------process 3: security sync process------------------------------------------------
  
 
- # ---------------------------------------------------------------------------start all processes------------------------------------------------------
+
+    # ---------------------------------------------------------------------------start all processes------------------------------------------------------
     heartbeat_thread.start()
     monitor_thread.start()
 
