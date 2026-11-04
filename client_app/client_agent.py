@@ -36,10 +36,8 @@ network_queue = queue.Queue()
 HEARTBEAT_INTERVAL = 5
 
 
-
-
 # =====================================================================================================================================================
-# functions to load saved pairing code and device name from the config file if it exists. 
+# startup functions
 # =====================================================================================================================================================
 
 # check if config file exists
@@ -74,12 +72,7 @@ def save_config(key, value):
     with open(CONFIG_FILE, "w") as file:
         json.dump(config, file, indent=4)
 
-
-
-# =====================================================================================================================================================
-# connection request to server.
-# =====================================================================================================================================================
-  
+# connection to the server
 def send_request(payload):
     try:
         response = requests.post(
@@ -112,12 +105,6 @@ def send_request(payload):
             "error": "Connection to server failed"
         }
 
-  
-
-# =====================================================================================================================================================
-# once connection is established, move on to collecting device stats and info
-# =====================================================================================================================================================
-  
 # Get operating system
 def get_os():
     try:
@@ -138,12 +125,8 @@ def get_ip():
 
     return None
 
-
-# more info is added in this section later.....
-
-
 # =====================================================================================================================================================
-# registering, pairing
+# registering, pairing and initial sync
 # =====================================================================================================================================================
 
 def registerDevice():
@@ -186,15 +169,33 @@ def verifyDevice(pairing_code):
         return False
 
 
+def initial_sync(pairing_code, device_name):
+            response = send_request({
+                "action": "sync",
+                "pairing_code": pairing_code,
+                "operating_system": get_os(),
+                "ip_address": get_ip(),
+                "device_name": device_name
+            })
+    
+            if response.get("synced"):
+                print("initial sync successful")
+                return True
+                
+            else:
+                print("initial sync failed:", response.get("error"))
+                return False
+                
 
 # =====================================================================================================================================================
 # heart beat sync every 5 sec
 # =====================================================================================================================================================
+
 def heartbeat_sync(pairing_code, device_name):
 
     while True:
         response = send_request({
-            "action": "sync",
+            "action": "heartbeat_sync",
             "pairing_code": pairing_code,
             "operating_system": get_os(),
             "ip_address": get_ip(),
@@ -212,6 +213,57 @@ def heartbeat_sync(pairing_code, device_name):
 # listen on TCP port 5002 for network stats and send it to the server
 # =====================================================================================================================================================
 
+# =====================================================================================================================================================
+# listen on TCP port 5002 for network stats and send it to the server
+# =====================================================================================================================================================
+
+def monitor_sync(pairing_code):
+
+    # Create TCP listener
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
+
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind((LISTEN_HOST, LISTEN_PORT))
+        server.listen()
+
+        print(f"listening on: {LISTEN_HOST}:{LISTEN_PORT}")
+
+        while True:
+            # Wait for monitor.py to connect
+            conn, addr = server.accept()
+            with conn:
+                try:
+                    # Read JSON messages sent by monitor.py
+                    with conn.makefile("r", encoding="utf-8") as stream:
+                        for line in stream:
+                            if not line.strip():
+                                continue
+
+                             # Convert received JSON to dictionary
+                            network_stats = json.loads(line)
+
+                            
+                            # Build request for Flask server
+                            payload = {
+                                "action": "monitor_sync",
+                                "pairing_code": pairing_code,
+                                "network_stats": network_stats
+                            }
+
+                            # send it to server
+                            response = send_request(payload)
+
+                            if response.get("synced") is True:
+                                print("Monitor sync successful")
+
+                            else:
+                                print(
+                                    "Monitor sync failed:",
+                                    response.get("error")
+                                )
+
+                except (OSError, UnicodeError) as e:
+                    print("Monitor TCP error:", e)
 
 # =====================================================================================================================================================
 # Main client function to process the info and talk with the server
@@ -242,43 +294,34 @@ def main():
         else:
             print("device could not be paired. plese check the pairing code in config file")
             return 0
-
+        
+    # initial sync
+    if not initial_sync(pairing_code, device_name):
+        return
      
     #at this point the client should have 1: established connection to the server and 2: registered and or paired the device with the server **********#
 
    
-    # -----------------------------------------------Step 2: Synchronize  every 5 seconds---------------------------
-    while True:
-        operating_system = get_os()
-        ip_address = get_ip()
+    # ------------------------------------------------------------------process 1: heartbeat sync process----------------------------------------------
+    heartbeat_thread = threading.Thread(
+            target=heartbeat_sync,
+            args=(pairing_code, device_name)
+    )
+
+   # ------------------------------------------------------------------process 2: monitor sync process-------------------------------------------------
+    monitor_thread = threading.Thread(
+        target=monitor_sync,
+        args=(pairing_code,)
+    )
 
 
-        print("IP Address:", ip_address)
+   # ------------------------------------------------------------------process 3: security sync process------------------------------------------------
+ 
+ 
 
-        print("\nSynchronizing with server...")
-
-        response = send_request({
-            "action": "sync",
-            "pairing_code": pairing_code,
-            "operating_system": operating_system,
-            "ip_address": ip_address,
-            "device_name": device_name
-        })
-
-        if not response.get("synced"):
-            print("Sync with the server failed!")
-            print("Error:", response.get("error"))
-
-            sync_status = response.get("sync_status", {})
-
-            for field, status in sync_status.items():
-                print(f"{field}: {'OK' if status else 'FAILED'}")
-           
-        
-
-        # Wait 5 seconds before the next synchronization
-        print("\nNext sync in 10 seconds...")
-        time.sleep(5)
+ # ---------------------------------------------------------------------------start all processes------------------------------------------------------
+    heartbeat_thread.start()
+    monitor_thread.start()
 
 
 if __name__ == "__main__":

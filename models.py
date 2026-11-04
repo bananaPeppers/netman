@@ -124,3 +124,25 @@ class PairingCode(db.Model):
         nullable=False,
         default="pending",
     )
+
+# network stats table
+class NetworkStats(db.Model):
+    __tablename__ = "network_stats"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    device_id = db.Column(
+        db.Integer,
+        db.ForeignKey("devices.device_id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    timestamp = db.Column(db.DateTime, nullable=False)
+
+    incoming_packets = db.Column(db.Integer, default=0)
+    outgoing_packets = db.Column(db.Integer, default=0)
+
+    incoming_bytes = db.Column(db.BigInteger, default=0)
+    outgoing_bytes = db.Column(db.BigInteger, default=0)
+
+    tcp_packets = db.Column(db.Integer, default=0)
+    udp_packets = db.Column(db.Integer, default=0)

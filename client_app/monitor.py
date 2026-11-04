@@ -349,15 +349,16 @@ def build_stats():
         if end - start >= INTERVAL:
             # create network statistics dictionary
             stats = {
-                "start_time": datetime.fromtimestamp(start).strftime("%Y-%m-%d %H:%M:%S"),
-                "end_time": datetime.fromtimestamp(end).strftime("%Y-%m-%d %H:%M:%S"),
-                "total_traffic": counters["total_in"] + counters["total_out"],
-                "total_in": counters["total_in"],
-                "total_out": counters["total_out"],
-                "total_in_mb": round(counters["total_in_bytes"] / 1000000, 2),
-                "total_out_mb": round(counters["total_out_bytes"] / 1000000, 2),
-                "tcp": counters["tcp"],
-                "udp": counters["udp"]
+                "timestamp": datetime.fromtimestamp(end).strftime("%Y-%m-%d %H:%M:%S"),
+
+                "incoming_packets": counters["total_in"],
+                "outgoing_packets": counters["total_out"],
+
+                "incoming_bytes": counters["total_in_bytes"],
+                "outgoing_bytes": counters["total_out_bytes"],
+
+                "tcp_packets": counters["tcp"],
+                "udp_packets": counters["udp"]
             }
 
             # convert dictionary to JSON

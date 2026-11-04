@@ -9,7 +9,7 @@ from flask import jsonify, request
 from datetime import datetime, timezone
 from api import bp
 from extensions import db
-from models import Device, PairingCode
+from models import Device, PairingCode, NetworkStats
 
 
 @bp.route("/pairing/deviceInfo", methods=["POST"])
@@ -109,7 +109,7 @@ def get_device_info():
                 status = "registered"
 
 
-            # for devices that are alrady pired, it will simply update the entries in its table
+            # for devices that are already pired, it will simply update the entries in its table
             else:
                 device = db.session.get(Device, pairing.device_id)
 
@@ -136,7 +136,7 @@ def get_device_info():
                 synced=True,
                 status=status,
                 device_id=device.device_id,
-                message="Sync successful"
+                message="initial Sync successful"
             ), 200
         
         except Exception as e:
@@ -148,3 +148,176 @@ def get_device_info():
                 synced=False,
                 error="Sync to server failed"
             ), 500
+
+    
+    # =====================================================================================================================================================
+    # Heartbeat sync - update device last_online
+    # =====================================================================================================================================================
+    if action == "heartbeat_sync":
+
+        if pairing.device_id is None:
+            return jsonify(
+                synced=False,
+                error="Device not registered"
+            ), 409
+
+        try:
+            device = db.session.get(Device, pairing.device_id)
+
+            if not device:
+                return jsonify(
+                    synced=False,
+                    error="Device not found"
+                ), 404
+
+            device.last_online = datetime.now(timezone.utc)
+
+            db.session.commit()
+
+            return jsonify(
+                synced=True,
+                device_id=device.device_id,
+                message="Heartbeat sync successful"
+            ), 200
+
+        except Exception as e:
+            db.session.rollback()
+            print("HEARTBEAT ERROR:", str(e))
+
+            return jsonify(
+                synced=False,
+                error="Heartbeat sync failed"
+            ), 500
+
+
+    # =====================================================================================================================================================
+    # Monitor sync - receive network statistics
+    # =====================================================================================================================================================
+    if action == "monitor_sync":
+
+        if pairing.device_id is None:
+            return jsonify(
+                synced=False,
+                error="Device not registered"
+            ), 409
+
+        device = db.session.get(Device, pairing.device_id)
+
+        if not device:
+            return jsonify(
+                synced=False,
+                error="Device not found"
+            ), 404
+
+        # Get network statistics from client
+        network_stats = data.get("network_stats")
+
+        if not isinstance(network_stats, dict):
+            return jsonify(
+                synced=False,
+                error="Invalid network statistics"
+            ), 400
+
+        # Required statistics
+        fields = (
+            "incoming_packets",
+            "outgoing_packets",
+            "incoming_bytes",
+            "outgoing_bytes",
+            "tcp_packets",
+            "udp_packets"
+        )
+
+        values = {}
+
+        # Validate timestamp and packet statistics
+        try:
+            timestamp = datetime.strptime(
+                network_stats["timestamp"],
+                "%Y-%m-%d %H:%M:%S"
+            )
+
+            for field in fields:
+                value = network_stats[field]
+
+                if type(value) is not int or value < 0:
+                    return jsonify(
+                        synced=False,
+                        error=f"Invalid {field}"
+                    ), 400
+
+                values[field] = value
+
+        except (KeyError, ValueError, TypeError):
+            return jsonify(
+                synced=False,
+                error="Missing or invalid network statistics"
+            ), 400
+
+        try:
+            stats = NetworkStats(
+                device_id=device.device_id,
+                timestamp=timestamp,
+                **values
+            )
+
+            db.session.add(stats)
+            db.session.commit()
+
+            return jsonify(
+                synced=True,
+                device_id=device.device_id,
+                message="Monitor statistics saved successfully"
+            ), 200
+
+        except Exception as e:
+            db.session.rollback()
+            print("MONITOR DATABASE ERROR:", str(e))
+
+            return jsonify(
+                synced=False,
+                error="Failed to save monitor statistics"
+            ), 500
+
+
+    # =====================================================================================================================================================
+    # Step 6: Security sync - receive security events
+    # =====================================================================================================================================================
+    if action == "security_sync":
+
+        if pairing.device_id is None:
+            return jsonify(
+                synced=False,
+                error="Device not registered"
+            ), 409
+
+        device = db.session.get(Device, pairing.device_id)
+
+        if not device:
+            return jsonify(
+                synced=False,
+                error="Device not found"
+            ), 404
+
+        security_log = data.get("security_log")
+
+        if not isinstance(security_log, dict) or not security_log:
+            return jsonify(
+                synced=False,
+                error="Invalid or missing security log"
+            ), 400
+
+        return jsonify(
+            synced=True,
+            device_id=device.device_id,
+            message="Security data received successfully"
+        ), 200
+
+
+    # =====================================================================================================================================================
+    # Step 7: Handle unsupported actions
+    # =====================================================================================================================================================
+    return jsonify(
+        error="Invalid action"
+    ), 400
+
