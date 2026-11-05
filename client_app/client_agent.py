@@ -20,7 +20,7 @@ from pathlib import Path
 # =====================================================================================================================================================
   
 # server IP. change this if the srever is running on a different ip address
-SERVER_URL = "http://127.0.0.1:5000/api/pairing/deviceInfo"
+SERVER_URL = "http://192.168.50.132:5000/api/pairing/deviceInfo"
 
 # Local configuration to save the config file locally
 CONFIG_FILE = Path.home() / ".client_config.json"
