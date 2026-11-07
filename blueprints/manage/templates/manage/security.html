@@ -1,10 +1,12 @@
 {% extends "manage/manage.html" %} {% block panel %}
 <div class="security-page">
   <div class="security-body">
-    <!-- left: device list -->
-    <div class="security-left">
-      <h2 class="security-title">security</h2>
-      <div class="sec-device-list" id="sec-device-list">
+    <!-- left section: device list + stats/protocol on top, IDS below -->
+    <div class="security-left-section">
+      <div class="security-upper">
+        <!-- device list tile -->
+        <div class="sec-tile security-left">
+          <div class="sec-device-list" id="sec-device-list">
         {% for device in devices %}
         <button
           class="sec-device-tile {{ 'active' if loop.first }}"
@@ -25,13 +27,12 @@
         {% else %}
         <p class="sec-empty">no devices yet</p>
         {% endfor %}
-      </div>
-    </div>
-
-    <!-- right: 2x2 grid of tiles -->
-    <div class="security-grid">
-      <!-- tile 1: range + activity stats -->
-      <div class="sec-tile sec-stats-tile">
+          </div>
+        </div>
+        <!-- middle column: stats over protocol -->
+        <div class="security-mid">
+          <!-- tile 1: range + activity stats -->
+          <div class="sec-tile sec-stats-tile">
         <div class="range-row">
           <span class="range-label">Range</span>
           <button class="range-pill active" type="button" data-minutes="10">
@@ -97,22 +98,97 @@
             </div>
           </div>
         </div>
+
+        <div class="sum-cards">
+          <div class="sum-card">
+            <span class="sum-icon" data-icon="packets"
+              ><!-- svg: total packets --></span
+            >
+            <span class="sum-label">Total Packets</span>
+            <span class="sum-value sum-packets" data-sum="packets">-</span>
+          </div>
+          <div class="sum-card">
+            <span class="sum-icon" data-icon="bytes"
+              ><!-- svg: total bytes --></span
+            >
+            <span class="sum-label">Total Bytes</span>
+            <span class="sum-value sum-bytes" data-sum="bytes">-</span>
+          </div>
+          <div class="sum-card">
+            <span class="sum-icon" data-icon="threats"
+              ><!-- svg: threats --></span
+            >
+            <span class="sum-label">Threats</span>
+            <span class="sum-value sum-threats" data-sum="threats">-</span>
+          </div>
+          <div class="sum-card">
+            <span class="sum-icon" data-icon="blocked"
+              ><!-- svg: blocked --></span
+            >
+            <span class="sum-label">Blocked</span>
+            <span class="sum-value sum-blocked" data-sum="blocked">-</span>
+          </div>
+        </div>
       </div>
 
-      <!-- tile 2: traffic chart (placeholder) -->
-      <div class="sec-tile sec-chart-tile"></div>
+          <!-- protocol distribution -->
+          <div class="sec-tile sec-chart-tile sec-proto-tile">
+            <div class="sec-chart-block">
+              <h3 class="sec-tile-title">Protocol Distribution</h3>
+              <div class="sec-chart-wrap">
+                <canvas id="protocolChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <!-- tile 3: IDS flags (placeholder) -->
+      <!-- IDS flags spans the bottom of the left section -->
       <div class="sec-tile sec-ids-tile">
         <h3 class="sec-tile-title">IDS flags</h3>
       </div>
-
-      <!-- tile 4: placeholder -->
-      <div class="sec-tile sec-blank-tile"></div>
     </div>
+
+    <!-- right section: one full-height tile with the two time charts -->
+    <div class="sec-tile sec-chart-tile sec-right-tile">
+        <div class="sec-chart-block sec-chart-traffic">
+          <div class="sec-chart-head">
+            <h3 class="sec-tile-title">Traffic</h3>
+            <div class="traffic-legend">
+              <span class="tleg-item">
+                <img
+                  class="tleg-icon"
+                  src="{{ url_for('manage.static', filename='images/incoming.svg') }}"
+                  alt=""
+                />
+                Inbound
+              </span>
+              <span class="tleg-item">
+                <img
+                  class="tleg-icon"
+                  src="{{ url_for('manage.static', filename='images/outgoing.svg') }}"
+                  alt=""
+                />
+                Outbound
+              </span>
+            </div>
+          </div>
+          <div class="sec-chart-wrap">
+            <canvas id="trafficChart"></canvas>
+          </div>
+        </div>
+
+        <div class="sec-chart-block">
+          <h3 class="sec-tile-title">Throughput</h3>
+          <div class="sec-chart-wrap">
+            <canvas id="throughputChart"></canvas>
+          </div>
+        </div>
+      </div>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
   const secList = document.getElementById("sec-device-list");
   const activityTime = document.querySelector(".activity-time");
@@ -158,23 +234,215 @@
   }
 
   function clearStats(placeholder) {
-    ["in-packets", "in-bytes", "out-packets", "out-bytes", "tcp", "udp"].forEach(
-      (k) => setStat(k, placeholder)
-    );
+    [
+      "in-packets",
+      "in-bytes",
+      "out-packets",
+      "out-bytes",
+      "tcp",
+      "udp",
+    ].forEach((k) => setStat(k, placeholder));
     activityCount.textContent = placeholder;
+    ["packets", "bytes", "connections"].forEach((k) => setSum(k, placeholder));
+  }
+
+  // summary cards (threats / blocked intentionally left as "-" for now)
+  function setSum(key, value) {
+    const el = document.querySelector(`.sum-value[data-sum="${key}"]`);
+    if (el) el.textContent = value;
+  }
+
+  // ----- charts -----
+  const COLORS = {
+    inbound: "#8FBF8F", // status/success green
+    outbound: "#C8B46A", // status/warning gold
+    other: "#8aa0b0",
+    grid: "rgba(167, 184, 198, 0.12)",
+    ticks: "#A7B8C6",
+    tcp: "#8FBF8F", // status/success green
+    udp: "#C8B46A", // status/warning gold
+  };
+  Chart.defaults.color = COLORS.ticks;
+  Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+
+  const trafficChart = new Chart(document.getElementById("trafficChart"), {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: "Inbound",
+          data: [],
+          borderColor: COLORS.inbound,
+          backgroundColor: "rgba(143, 191, 143, 0.15)",
+          fill: true,
+          tension: 0.35,
+          pointRadius: 0,
+          borderWidth: 2,
+        },
+        {
+          label: "Outbound",
+          data: [],
+          borderColor: COLORS.outbound,
+          backgroundColor: "rgba(200, 180, 106, 0.15)",
+          fill: true,
+          tension: 0.35,
+          pointRadius: 0,
+          borderWidth: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { display: false },
+      },
+      scales: {
+        x: { grid: { color: COLORS.grid }, ticks: { maxRotation: 0 } },
+        y: { beginAtZero: true, grid: { color: COLORS.grid } },
+      },
+    },
+  });
+
+  const protocolChart = new Chart(document.getElementById("protocolChart"), {
+    type: "doughnut",
+    data: {
+      labels: ["TCP", "UDP", "Other"],
+      datasets: [
+        {
+          data: [0, 0, 0],
+          backgroundColor: [COLORS.tcp, COLORS.udp, COLORS.other],
+          borderWidth: 0,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "62%",
+      plugins: {
+        legend: {
+          position: "right",
+          labels: { boxWidth: 12, usePointStyle: true },
+        },
+        tooltip: {
+          callbacks: {
+            label: (c) => {
+              const total = c.dataset.data.reduce((a, b) => a + b, 0) || 1;
+              const pct = ((c.parsed / total) * 100).toFixed(1);
+              return `${c.label}: ${nf.format(c.parsed)} (${pct}%)`;
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // throughput: inbound+outbound bytes per time bucket (x = time)
+  const throughputChart = new Chart(
+    document.getElementById("throughputChart"),
+    {
+      type: "bar",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: "bytes",
+            data: [],
+            backgroundColor: COLORS.inbound,
+            borderRadius: 4,
+            maxBarThickness: 40,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: { label: (c) => fmtBytes(c.parsed.y) },
+          },
+        },
+        scales: {
+          x: {
+            title: { display: true, text: "time", color: COLORS.ticks },
+            grid: { display: false },
+            ticks: { maxRotation: 0 },
+          },
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: "bytes", color: COLORS.ticks },
+            grid: { color: COLORS.grid },
+            ticks: { callback: (v) => fmtBytes(v) },
+          },
+        },
+      },
+    },
+  );
+
+  // series: array of {label, bytes}. Empty -> blank chart.
+  function updateThroughputChart(series) {
+    const rows = Array.isArray(series) ? series : [];
+    throughputChart.data.labels = rows.map((p) => p.label);
+    throughputChart.data.datasets[0].data = rows.map((p) => p.bytes);
+    throughputChart.update();
+  }
+
+  function updateTrafficChart(series) {
+    trafficChart.data.labels = series.map((p) => p.label);
+    trafficChart.data.datasets[0].data = series.map((p) => p.inbound);
+    trafficChart.data.datasets[1].data = series.map((p) => p.outbound);
+    trafficChart.update();
+  }
+
+  function updateProtocolChart(tcp, udp, totalPackets) {
+    const other = Math.max(totalPackets - tcp - udp, 0);
+    const ds = protocolChart.data.datasets[0];
+    if (tcp + udp + other > 0) {
+      protocolChart.data.labels = ["TCP", "UDP", "Other"];
+      ds.data = [tcp, udp, other];
+      ds.backgroundColor = [COLORS.tcp, COLORS.udp, COLORS.other];
+      protocolChart.options.plugins.legend.display = true;
+      protocolChart.options.plugins.tooltip.enabled = true;
+    } else {
+      // no data -> empty gray ring (same gray as headings)
+      protocolChart.data.labels = ["no data"];
+      ds.data = [1];
+      ds.backgroundColor = [COLORS.ticks];
+      protocolChart.options.plugins.legend.display = false;
+      protocolChart.options.plugins.tooltip.enabled = false;
+    }
+    protocolChart.update();
+  }
+
+  function clearCharts() {
+    updateTrafficChart([]);
+    updateProtocolChart(0, 0, 0);
+    updateThroughputChart([]);
   }
 
   // ----- load stats for the selected device + range -----
-  async function loadStats() {
+  // background=true (polling ticks) skips the "..." placeholder flash so the
+  // numbers/charts update in place instead of blanking out every few seconds.
+  let statsInFlight = false;
+  async function loadStats(background = false) {
+    if (statsInFlight) return;
+    statsInFlight = true;
+
     activityTime.textContent = sinceLabel(selectedMinutes());
 
     const deviceId = selectedDeviceId();
     if (!deviceId) {
       clearStats("-");
+      clearCharts();
+      statsInFlight = false;
       return;
     }
 
-    clearStats("...");
+    if (!background) clearStats("...");
     try {
       const res = await fetch("/api/security/stats", {
         method: "POST",
@@ -194,8 +462,20 @@
       setStat("out-bytes", fmtBytes(d.outbound.bytes));
       setStat("tcp", nf.format(d.tcp));
       setStat("udp", nf.format(d.udp));
+
+      const totalPackets = d.inbound.packets + d.outbound.packets;
+      setSum("packets", nf.format(totalPackets));
+      setSum("bytes", fmtBytes(d.inbound.bytes + d.outbound.bytes));
+      setSum("connections", nf.format(d.total_connections));
+
+      updateTrafficChart(d.series || []);
+      updateProtocolChart(d.tcp, d.udp, totalPackets);
+      updateThroughputChart(d.series || []);
     } catch {
       clearStats("—");
+      clearCharts();
+    } finally {
+      statsInFlight = false;
     }
   }
 
@@ -221,7 +501,34 @@
     });
   });
 
+  // ----- auto-refresh -----
+  // Poll on the same cadence the monitor reports on (every 5s), so the
+  // numbers and charts stay live without a page reload. Paused while the tab
+  // isn't visible so we don't poll a background tab.
+  const REFRESH_MS = 5000;
+  let refreshTimer = null;
+
+  function startAutoRefresh() {
+    if (refreshTimer) return;
+    refreshTimer = setInterval(() => loadStats(true), REFRESH_MS);
+  }
+
+  function stopAutoRefresh() {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      stopAutoRefresh();
+    } else {
+      loadStats(true); // catch up immediately on return
+      startAutoRefresh();
+    }
+  });
+
   // initial load (default device + range)
   loadStats();
+  startAutoRefresh();
 </script>
 {% endblock %}

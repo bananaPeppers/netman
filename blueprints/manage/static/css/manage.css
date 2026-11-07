@@ -155,7 +155,10 @@ body:has(.split-page) {
 
 body:has(.split-page) main,
 body:has(.split-page) .side-layout,
-body:has(.split-page) .panel {
+body:has(.split-page) .panel,
+body:has(.security-page) main,
+body:has(.security-page) .side-layout,
+body:has(.security-page) .panel {
   min-height: 0;
 }
 
@@ -540,18 +543,19 @@ body:has(.split-page) .panel {
 
 .security-body {
   display: flex;
-  gap: 28px;
+  gap: 24px;
   height: 100%;
   min-height: 0;
 }
 
-/* ---- left: device list ---- */
-.security-left {
+/* ---- device list tile ---- */
+.security-upper .security-left {
   width: 230px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  padding: 16px 14px;
 }
 
 .security-title {
@@ -588,8 +592,9 @@ body:has(.split-page) .panel {
   align-items: center;
   gap: 10px;
   width: 100%;
-  background-color: #1A2B36;
-  border: none;
+  /* lighter than the #1A2B36 container tile so pills stand out */
+  background-color: #233643;
+  border: 1px solid rgba(167, 184, 198, 0.12);
   border-radius: 10px;
   padding: 12px 14px;
   font: inherit;
@@ -600,7 +605,7 @@ body:has(.split-page) .panel {
 
 .sec-device-tile:hover,
 .sec-device-tile.active {
-  background-color: #233a45;
+  background-color: #2d4552;
 }
 
 .sec-device-name {
@@ -635,14 +640,53 @@ body:has(.split-page) .panel {
   font-size: 13px;
 }
 
-/* ---- right: 2x2 tile grid ---- */
-.security-grid {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
+/* ---- flex layout ----
+   body (row): [ left-section | right-section ]
+   left-section (column): [ upper (row) | IDS ]
+   upper (row): [ device list | middle (column: stats + protocol) ] */
+.security-left-section {
+  flex: 1.5;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
+  min-height: 0;
+}
+
+.security-upper {
+  flex: 1;
+  display: flex;
+  gap: 24px;
+  min-height: 0;
+}
+
+.security-mid {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 0;
+}
+
+/* stats sized to its content; protocol fills the rest of the middle column */
+.security-mid .sec-stats-tile {
+  flex: 0 0 auto;
+}
+.security-mid .sec-proto-tile {
+  flex: 1;
+  /* never collapse below this, so the donut always has room to render
+     (and this stretches the device-list tile next to it) */
+  min-height: 190px;
+}
+
+/* IDS flags: bottom strip spanning the left section's width */
+.sec-ids-tile {
+  flex: 0 0 300px;
+}
+
+/* right section: traffic + throughput stacked, full height */
+.sec-right-tile {
+  flex: 1.1;
+  min-height: 0;
 }
 
 .sec-tile {
@@ -659,6 +703,76 @@ body:has(.split-page) .panel {
   font-family: "IBM Plex Mono", monospace;
   font-size: 17px;
   font-weight: 400;
+}
+
+/* ---- chart tiles ---- */
+.sec-chart-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* each chart block fills an equal share of its tile's height */
+.sec-chart-block {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.sec-chart-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin-top: 10px;
+}
+
+/* traffic chart: title + custom HTML legend row */
+.sec-chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.traffic-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tleg-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #cdd8e2;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 16px;
+}
+
+.tleg-icon {
+  width: 28px;
+  height: auto;
+}
+
+.sec-chart-wrap canvas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.sec-chart-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  color: #6b7d8a;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 14px;
+  pointer-events: none;
 }
 
 /* ---- tile 1: range + activity stats ---- */
@@ -706,7 +820,7 @@ body:has(.split-page) .panel {
   grid-template-columns: 1.4fr 1fr;
   align-items: center;
   column-gap: 24px;
-  margin-top: 22px;
+  margin-top: 14px;
   color: #8ea0ad;
   font-size: 15px;
 }
@@ -720,13 +834,65 @@ body:has(.split-page) .panel {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   column-gap: 24px;
-  margin-top: 26px;
+  margin-top: 16px;
 }
+
+.sum-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 0;
+}
+
+.sum-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+  border: 1px solid rgba(167, 184, 198, 0.25);
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.sum-icon {
+  display: none; /* icons not used for now; remove this line to show them */
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.sum-icon svg,
+.sum-icon img {
+  width: 100%;
+  height: 100%;
+}
+
+.sum-label {
+  color: #e6f0ee;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.sum-value {
+  color: #e6f0ee;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.sum-packets,
+.sum-bytes { color: #8FBF8F; }
+.sum-connections { color: #4db8f0; }
+.sum-threats { color: #ff5a4d; }
+.sum-blocked { color: #b79cf0; }
 
 .stats-col {
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 18px;
 }
 
 .stat-line {
@@ -744,7 +910,7 @@ body:has(.split-page) .panel {
 }
 
 .stat-value {
-  color: #e6f0ee;
+  color: #8FBF8F;
   font-size: 15px;
   border-left: 1px solid #556470;
   padding-left: 10px;

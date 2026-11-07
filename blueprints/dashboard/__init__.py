@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta, timezone
 from flask import Blueprint, render_template, session
 
-from blueprints.common import device_stats, require_login, ONLINE_WINDOW_MINUTES
+from blueprints.common import device_stats, require_login, ONLINE_WINDOW_SECONDS
+from events import recent_events
 from extensions import db
 from models import User, Device
 
@@ -20,7 +21,7 @@ bp.before_request(require_login)
 def dashboard():
     user = db.session.get(User, session["user_id"])
     online_cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(
-        minutes=ONLINE_WINDOW_MINUTES
+        seconds=ONLINE_WINDOW_SECONDS
     )
     devices = Device.query.filter_by(user_id=session["user_id"]).all()
     return render_template(
@@ -28,5 +29,6 @@ def dashboard():
         network=user.network if user else "-",
         devices=devices,
         online_cutoff=online_cutoff,
+        events=recent_events(session["user_id"]),
         **device_stats(),
     )

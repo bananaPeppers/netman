@@ -65,6 +65,10 @@ def security_stats():
 
     in_pkts, out_pkts, in_bytes, out_bytes, tcp, udp, samples = row
 
+    # time series for the traffic line chart: bucket the window into N slots and
+    # sum inbound/outbound packets per slot, so the chart has a fixed, simple shape
+    series = _traffic_series(device_id, cutoff, minutes)
+
     return jsonify(
         device_id=device_id,
         minutes=minutes,
@@ -75,4 +79,56 @@ def security_stats():
         # tcp/udp are not split by direction in network_stats, so these are totals
         tcp=int(tcp),
         udp=int(udp),
+        series=series,
     ), 200
+
+
+# number of points on the traffic line chart
+SERIES_BUCKETS = 12
+
+
+def _traffic_series(device_id, cutoff, minutes):
+    """Bucket the [cutoff, now] window into SERIES_BUCKETS equal slots. For each
+    slot, sum inbound/outbound packets and inbound+outbound bytes (throughput).
+    Returns a list of {label, inbound, outbound, bytes}, oldest first, with empty
+    slots as zeros."""
+    now = datetime.now()
+    span = (now - cutoff).total_seconds()
+    slot = span / SERIES_BUCKETS if span > 0 else 1
+
+    rows = (
+        db.session.query(
+            NetworkStats.timestamp,
+            NetworkStats.incoming_packets,
+            NetworkStats.outgoing_packets,
+            NetworkStats.incoming_bytes,
+            NetworkStats.outgoing_bytes,
+        )
+        .filter(
+            NetworkStats.device_id == device_id,
+            NetworkStats.timestamp >= cutoff,
+        )
+        .all()
+    )
+
+    buckets = [
+        {"inbound": 0, "outbound": 0, "bytes": 0}
+        for _ in range(SERIES_BUCKETS)
+    ]
+    for ts, inc, out, in_b, out_b in rows:
+        idx = int((ts - cutoff).total_seconds() / slot)
+        idx = min(max(idx, 0), SERIES_BUCKETS - 1)
+        buckets[idx]["inbound"] += int(inc or 0)
+        buckets[idx]["outbound"] += int(out or 0)
+        buckets[idx]["bytes"] += int(in_b or 0) + int(out_b or 0)
+
+    series = []
+    for i, b in enumerate(buckets):
+        end = cutoff + timedelta(seconds=slot * (i + 1))
+        series.append({
+            "label": end.strftime("%H:%M"),
+            "inbound": b["inbound"],
+            "outbound": b["outbound"],
+            "bytes": b["bytes"],
+        })
+    return series

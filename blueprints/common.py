@@ -6,8 +6,8 @@ from jinja2 import TemplateNotFound
 
 from models import Device
 
-# a device counts as online if it was seen within last 1 minutes
-ONLINE_WINDOW_MINUTES = 1
+
+ONLINE_WINDOW_SECONDS = 15
 
 
 # runs before every request in a blueprint: only logged-in users get in
@@ -26,10 +26,40 @@ def render_section(folder, section, **context):
         abort(404)
 
 
+def offline_since(last_online):
+    if not last_online:
+        return ""
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    delta = now - last_online
+    hours = delta.total_seconds() / 3600
+    if hours < 1:
+        return ""
+    if hours < 24:
+        return f"{int(hours)} hr"
+    days = hours / 24
+    if days < 7:
+        return f"{int(days)} d"
+    weeks = days / 7
+    if weeks < 4:
+        return f"{int(weeks)} wk"
+    months = days / 30
+    if months < 2:
+        return "1m"
+    return ""
+
+
+# format a naive-UTC timestamp (e.g. Event.event_timestamp) as "HH:MM" in
+# EST, the same fixed UTC-5 offset the security page's JS clock uses.
+def est_time(dt):
+    if not dt:
+        return ""
+    return (dt - timedelta(hours=5)).strftime("%H:%M")
+
+
 # get device stats from the db (the logged-in user's devices only)
 def device_stats():
     cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(
-        minutes=ONLINE_WINDOW_MINUTES
+        seconds=ONLINE_WINDOW_SECONDS
     )
     mine = Device.query.filter_by(user_id=session["user_id"])
     total = mine.count()

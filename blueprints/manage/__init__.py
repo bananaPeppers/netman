@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from flask import Blueprint, session
 
 from blueprints.common import (
-    ONLINE_WINDOW_MINUTES,
+    ONLINE_WINDOW_SECONDS,
     device_stats,
     render_section,
     require_login,
@@ -72,7 +72,7 @@ def manage(section):
         # a device seen since this time counts as online
         context["online_cutoff"] = datetime.now(timezone.utc).replace(
             tzinfo=None
-        ) - timedelta(minutes=ONLINE_WINDOW_MINUTES)
+        ) - timedelta(seconds=ONLINE_WINDOW_SECONDS)
         context["rule_domains"], context["rule_safe_mode"] = rules_data(
             "device_id", [d.device_id for d in devices]
         )
@@ -90,5 +90,5 @@ def manage(section):
         # a device seen since this time counts as online
         context["online_cutoff"] = datetime.now(timezone.utc).replace(
             tzinfo=None
-        ) - timedelta(minutes=ONLINE_WINDOW_MINUTES)
+        ) - timedelta(seconds=ONLINE_WINDOW_SECONDS)
     return render_section("manage", section, **context)

@@ -12,3 +12,11 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+/* zoom out for smaller screens so the screen doesnot break */
+@media (max-height: 1000px) {
+    body {
+        zoom: 0.8;
+        min-height: 125vh;
+    }
+}

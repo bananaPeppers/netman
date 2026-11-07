@@ -6,8 +6,9 @@
 
 
 from flask import jsonify, request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from api import bp
+from events import log_connection_established, log_device_added, ONLINE_WINDOW_SECONDS
 from extensions import db
 from models import Device, PairingCode, NetworkStats
 
@@ -108,6 +109,9 @@ def get_device_info():
                 pairing.device_id = device.device_id
                 status = "registered"
 
+                log_device_added(device.user_id, device.device_id)
+                log_connection_established(device.user_id, device.device_id, device.device_name)
+
 
             # for devices that are already pired, it will simply update the entries in its table
             else:
@@ -119,11 +123,20 @@ def get_device_info():
                         error="Device not found"
                     ), 404
 
+                # was this device considered offline right before this sync?
+                offline_cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(
+                    seconds=ONLINE_WINDOW_SECONDS
+                )
+                was_offline = device.last_online is None or device.last_online < offline_cutoff
+
                 device.operating_system = operating_system
                 device.ip_address = ip_address
                 device.device_name = device_name
                 device.last_online = datetime.now(timezone.utc)
                 status = "updated"
+
+                if was_offline:
+                    log_connection_established(device.user_id, device.device_id, device.device_name)
 
             db.session.commit()
 
@@ -170,7 +183,16 @@ def get_device_info():
                     error="Device not found"
                 ), 404
 
+            # was this device considered offline right before this heartbeat?
+            offline_cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(
+                seconds=ONLINE_WINDOW_SECONDS
+            )
+            was_offline = device.last_online is None or device.last_online < offline_cutoff
+
             device.last_online = datetime.now(timezone.utc)
+
+            if was_offline:
+                log_connection_established(device.user_id, device.device_id, device.device_name)
 
             db.session.commit()
 

@@ -33,7 +33,14 @@
             class="status-dot {% if device.last_online and device.last_online >= online_cutoff %}online{% else %}offline{% endif %}"
           ></span>
           <span class="device-ip">
-            {% if device.last_online and device.last_online >= online_cutoff %}{{ device.ip_address }}{% else %}device offline <span class="offline-mark">!</span>{% endif %}
+            {% if device.last_online and device.last_online >= online_cutoff
+            %}{{ device.ip_address }}{% else %}device offline
+            <span class="offline-mark">!</span>
+            {%- set since = device.last_online | offline_since %}
+            {%- if since %}
+            <span class="offline-since">{{ since }}</span>
+            {%- endif %}
+            {% endif %}
           </span>
         </div>
 
@@ -44,7 +51,21 @@
   <div class="content-area">
     <div class="content-tile tile-large"></div>
     <div class="tiles-row">
-      <div class="content-tile"></div>
+      <div class="content-tile">
+        <h3 class="dash-tile-title">Security Warnings</h3>
+        <div class="event-list">
+          {% for event in events %}
+          <div class="event-row event-{{ event.severity }}">
+            <span class="event-time"
+              >{{ event.event_timestamp | est_time }}</span
+            >
+            <span class="event-desc">{{ event.event_description }}</span>
+          </div>
+          {% else %}
+          <p class="event-empty">no warnings in the last 24 hours</p>
+          {% endfor %}
+        </div>
+      </div>
       <div class="content-tile"></div>
     </div>
   </div>

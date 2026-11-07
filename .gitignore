@@ -4,3 +4,5 @@ __pycache__/
 venv/
 .env
 *.db
+client_app/logs.csv
+client_app/*.log

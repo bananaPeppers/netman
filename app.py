@@ -3,16 +3,24 @@ from sqlalchemy import text
 from werkzeug.security import check_password_hash
 
 from api import bp as api_bp
+from blueprints.common import est_time, offline_since
 from blueprints.dashboard import bp as dashboard_bp
 from blueprints.manage import bp as manage_bp
 from config.config import Config
+from events import start_event_watcher
 from extensions import db
 from models import User
 
 app = Flask(__name__)
 app.config.from_object(Config)
+app.jinja_env.filters["offline_since"] = offline_since
+app.jinja_env.filters["est_time"] = est_time
 
 db.init_app(app)
+
+# background thread that logs a "connection lost" event the first time a
+# device's heartbeat goes stale (see events.py)
+start_event_watcher(app)
 
 # each main page lives in its own folder under blueprints/
 app.register_blueprint(dashboard_bp)
