@@ -365,8 +365,8 @@ def build_stats():
             stats_json = json.dumps(stats)
 
             # print JSON
-            print("\n===== NETWORK TRAFFIC JSON =====")
-            print(json.dumps(stats, indent=4))
+            # print("\n===== NETWORK TRAFFIC JSON =====")
+            # # print(json.dumps(stats, indent=4))
 
             # send JSON to client
             send_client_stats(stats_json)
@@ -417,8 +417,8 @@ def build_log():
         # dictionary to JSON
         logs_json = json.dumps(packet_info)
 
-        # print log line
-        print(json.dumps(packet_info, indent=4))
+        # # print log line
+        # print(json.dumps(packet_info, indent=4))
 
 
         # send json to security

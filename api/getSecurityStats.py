@@ -6,7 +6,7 @@
 # returns the inbound/outbound totals the security tile shows.
 # =====================================================================================================================================================
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from flask import jsonify, request, session
 from sqlalchemy import func
@@ -19,6 +19,11 @@ from models import NetworkStats
 # windows the security page offers, in minutes
 ALLOWED_MINUTES = {10, 30, 60, 1440}
 DEFAULT_MINUTES = 10
+
+
+# naive EST "now", independent of the server process's own system timezone
+def _est_now():
+    return datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=5)
 
 
 @bp.route("/security/stats", methods=["POST"])
@@ -42,9 +47,11 @@ def security_stats():
     if minutes not in ALLOWED_MINUTES:
         minutes = DEFAULT_MINUTES
 
-    # network_stats.timestamp is stored as naive local time by the client,
-    # so compare against local "now"
-    cutoff = datetime.now() - timedelta(minutes=minutes)
+    # network_stats.timestamp is stored as naive EST (the client's local time),
+    # so cutoff must be computed the same way regardless of the server's own
+    # system clock/timezone - datetime.now() broke this on any host not set to
+    # EST (eg. a UTC-clocked Docker container), since it filtered out every row
+    cutoff = _est_now() - timedelta(minutes=minutes)
 
     row = (
         db.session.query(
@@ -92,7 +99,7 @@ def _traffic_series(device_id, cutoff, minutes):
     slot, sum inbound/outbound packets and inbound+outbound bytes (throughput).
     Returns a list of {label, inbound, outbound, bytes}, oldest first, with empty
     slots as zeros."""
-    now = datetime.now()
+    now = _est_now()
     span = (now - cutoff).total_seconds()
     slot = span / SERIES_BUCKETS if span > 0 else 1
 
