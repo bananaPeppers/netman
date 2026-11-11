@@ -72,6 +72,17 @@ def recent_events(user_id, hours=24, limit=50):
     )
 
 
+# ----- fetch every event on record for this user (no time cutoff) -----
+def all_events(user_id, limit=1000):
+    return (
+        Event.query
+        .filter(Event.user_id == user_id)
+        .order_by(Event.event_timestamp.desc())
+        .limit(limit)
+        .all()
+    )
+
+
 # ----- background watcher: detects devices going offline -----
 # Nothing signals "a device went offline" directly (the client just stops
 # heartbeating), so this polls for devices whose last_online has fallen

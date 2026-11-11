@@ -54,13 +54,18 @@ main{
 .side-nav{
   flex-direction: column;
   align-items: flex-start;
-  gap: 30px;
-  width: 150px;
-  padding: 45px 0 0 30px;
+  gap: 26px;
+  /* fixed and wide enough for the longest label on any page, so the nav items
+     and the panel line up at the same spot on both dashboard and manage.
+     kept tight so the content panel gets as much room as possible. */
+  width: 185px;
+  padding: 28px 0 0 12px;
 }
 
 .side-nav .nav-btn{
-  font-size: 20px;
+  font-size: 18px;
+  /* keep every item on a single line so spacing stays even across pages */
+  white-space: nowrap;
 }
 
 .panel{

@@ -1,0 +1,17 @@
+{% extends "side_layout.html" %} {% block page_styles %} {{ super() }}
+<link
+  rel="stylesheet"
+  href="{{ url_for('security.static', filename='css/security.css') }}"
+/>
+{% endblock %} {% block side_links %}
+<a
+  class="nav-btn {{ 'active' if section == 'overview' }}"
+  href="{{ url_for('security.security', section='overview') }}"
+  >Overview</a
+>
+<a
+  class="nav-btn {{ 'active' if section == 'logs' }}"
+  href="{{ url_for('security.security', section='logs') }}"
+  >Logs</a
+>
+{% endblock %}

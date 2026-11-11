@@ -48,12 +48,22 @@ def offline_since(last_online):
     return ""
 
 
-# format a naive-UTC timestamp (e.g. Event.event_timestamp) as "HH:MM" in
-# EST, the same fixed UTC-5 offset the security page's JS clock uses.
-def est_time(dt):
+# format a naive-UTC timestamp (e.g. Event.event_timestamp) as
+# "YYYY-MM-DD HH:MM" in EST, the same fixed UTC-5 offset the device
+# activity page's JS clock uses.
+def est_datetime(dt):
     if not dt:
         return ""
-    return (dt - timedelta(hours=5)).strftime("%H:%M")
+    return (dt - timedelta(hours=5)).strftime("%Y-%m-%d %H:%M")
+
+
+EST = timezone(timedelta(hours=-5), "EST")
+
+
+# start of the "past 1 hour" activity window, eg. "10:15 EST"
+def activity_since():
+    since = datetime.now(EST) - timedelta(hours=1)
+    return since.strftime("%H:%M %Z")
 
 
 # get device stats from the db (the logged-in user's devices only)

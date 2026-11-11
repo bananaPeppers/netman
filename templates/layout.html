@@ -18,6 +18,11 @@
         href="{{ url_for('manage.manage') }}"
         >manage</a
       >
+      <a
+        class="nav-btn {{ 'active' if request.blueprint == 'security' }}"
+        href="{{ url_for('security.security') }}"
+        >security</a
+      >
     </nav>
     <form class="logout-form" method="post" action="{{ url_for('logout') }}">
       <button class="logout-btn" type="submit" aria-label="Log out" title="log out">

@@ -1,0 +1,45 @@
+/* ---- overview & logs (both placeholder, same tile layout for now) ---- */
+
+/* lock the page to the window, same approach as the dashboard/device
+   activity pages: only inner tiles scroll, the page itself does not. */
+body:has(.security-overview) {
+  height: 100vh;
+  overflow: hidden;
+}
+
+body:has(.security-overview) main,
+body:has(.security-overview) .side-layout,
+body:has(.security-overview) .panel {
+  min-height: 0;
+}
+
+.security-overview {
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 30px;
+}
+
+.so-tile {
+  background-color: #1A2B36;
+  border-radius: 15px;
+  min-height: 0;
+}
+
+.so-tile-large {
+  flex: 2;
+}
+
+.so-row {
+  flex: 1;
+  display: flex;
+  gap: 20px;
+  min-height: 0;
+}
+
+.so-row .so-tile {
+  flex: 1;
+}

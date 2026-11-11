@@ -1,10 +1,17 @@
 from datetime import datetime, timedelta, timezone
-from flask import Blueprint, render_template, session
 
-from blueprints.common import device_stats, require_login, ONLINE_WINDOW_SECONDS
-from events import recent_events
+from flask import Blueprint, session
+
+from blueprints.common import (
+    ONLINE_WINDOW_SECONDS,
+    activity_since,
+    device_stats,
+    render_section,
+    require_login,
+)
+from events import all_events
 from extensions import db
-from models import User, Device
+from models import Device, User
 
 bp = Blueprint(
     "dashboard",
@@ -16,19 +23,32 @@ bp = Blueprint(
 bp.before_request(require_login)
 
 
-# show the logged-in user's network name
-@bp.route("")
-def dashboard():
-    user = db.session.get(User, session["user_id"])
-    online_cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(
+# a device seen since this time counts as online
+def online_cutoff():
+    return datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(
         seconds=ONLINE_WINDOW_SECONDS
     )
-    devices = Device.query.filter_by(user_id=session["user_id"]).all()
-    return render_template(
-        "dashboard/dashboard.html",
-        network=user.network if user else "-",
-        devices=devices,
-        online_cutoff=online_cutoff,
-        events=recent_events(session["user_id"]),
-        **device_stats(),
-    )
+
+
+# dashboard has two sub pages: "overview" (network overview) and "activity"
+# (device activity). each sub page is its own template under templates/dashboard/.
+@bp.route("", defaults={"section": "overview"})
+@bp.route("/<section>")
+def dashboard(section):
+    context = {}
+    if section == "overview":
+        user = db.session.get(User, session["user_id"])
+        context["network"] = user.network if user else "-"
+        context["devices"] = Device.query.filter_by(
+            user_id=session["user_id"]
+        ).all()
+        context["online_cutoff"] = online_cutoff()
+        context["events"] = all_events(session["user_id"])
+        context.update(device_stats())
+    elif section == "activity":
+        context["since"] = activity_since()
+        context["devices"] = Device.query.filter_by(
+            user_id=session["user_id"]
+        ).all()
+        context["online_cutoff"] = online_cutoff()
+    return render_section("dashboard", section, **context)

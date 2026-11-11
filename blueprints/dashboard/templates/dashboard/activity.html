@@ -1,10 +1,9 @@
-{% extends "manage/manage.html" %} {% block panel %}
+{% extends "dashboard/dashboard.html" %} {% block panel %}
 <div class="security-page">
   <div class="security-body">
-    <div class="security-left-section">
-      <div class="security-upper">
-        <!-- TILE: device list -->
-        <div class="sec-tile security-left">
+    <div class="security-upper">
+      <!-- TILE: device list -->
+      <div class="sec-tile security-left">
           <div class="sec-device-list" id="sec-device-list">
             {% for device in devices %}
             <button
@@ -31,8 +30,8 @@
         </div>
 
         <div class="security-mid">
-          <!-- TILE: range + activity stats -->
-          <div class="sec-tile sec-stats-tile">
+          <!-- DIV: summary (range + activity stats) -->
+          <div class="sec-tile sec-summary-tile">
             <div class="range-row">
               <span class="range-label">Range</span>
               <button class="range-pill active" type="button" data-minutes="10">
@@ -53,9 +52,6 @@
               <span class="activity-since"
                 >Activity since:
                 <span class="activity-time">{{ since }}</span></span
-              >
-              <span class="activity-total"
-                >total connections: <span class="activity-count">-</span></span
               >
             </div>
 
@@ -98,7 +94,10 @@
                 </div>
               </div>
             </div>
+          </div>
 
+          <!-- DIV: totals (packet / byte summary) -->
+          <div class="sec-tile sec-totals-tile">
             <div class="sum-cards">
               <div class="sum-card">
                 <span class="sum-label">Total Packets</span>
@@ -108,19 +107,11 @@
                 <span class="sum-label">Total Bytes</span>
                 <span class="sum-value sum-bytes" data-sum="bytes">-</span>
               </div>
-              <div class="sum-card">
-                <span class="sum-label">Threats</span>
-                <span class="sum-value sum-threats" data-sum="threats">-</span>
-              </div>
-              <div class="sum-card">
-                <span class="sum-label">Blocked</span>
-                <span class="sum-value sum-blocked" data-sum="blocked">-</span>
-              </div>
             </div>
           </div>
 
-          <!-- TILE: protocol distribution chart -->
-          <div class="sec-tile sec-chart-tile sec-proto-tile">
+          <!-- DIV: protocol (distribution chart) -->
+          <div class="sec-tile sec-chart-tile sec-protocol-tile">
             <div class="sec-chart-block">
               <h3 class="sec-tile-title">Protocol Distribution</h3>
               <div class="sec-chart-wrap">
@@ -131,12 +122,6 @@
         </div>
       </div>
 
-      <!-- TILE: IDS flags -->
-      <div class="sec-tile sec-ids-tile">
-        <h3 class="sec-tile-title">IDS flags</h3>
-      </div>
-    </div>
-
     <!-- TILE: traffic + throughput charts -->
     <div class="sec-tile sec-chart-tile sec-right-tile">
       <div class="sec-chart-block sec-chart-traffic">
@@ -146,7 +131,7 @@
             <span class="tleg-item">
               <img
                 class="tleg-icon"
-                src="{{ url_for('manage.static', filename='images/incoming.svg') }}"
+                src="{{ url_for('dashboard.static', filename='images/incoming.svg') }}"
                 alt=""
               />
               Inbound
@@ -154,7 +139,7 @@
             <span class="tleg-item">
               <img
                 class="tleg-icon"
-                src="{{ url_for('manage.static', filename='images/outgoing.svg') }}"
+                src="{{ url_for('dashboard.static', filename='images/outgoing.svg') }}"
                 alt=""
               />
               Outbound
@@ -185,7 +170,6 @@
   // DOM references
   const secList = document.getElementById("sec-device-list");
   const activityTime = document.querySelector(".activity-time");
-  const activityCount = document.querySelector(".activity-count");
 
   // number formatter (thousands separators)
   const nf = new Intl.NumberFormat("en-US");
@@ -260,8 +244,7 @@
       "tcp",
       "udp",
     ].forEach((k) => setStat(k, placeholder));
-    activityCount.textContent = placeholder;
-    ["packets", "bytes", "connections"].forEach((k) => setSum(k, placeholder));
+    ["packets", "bytes"].forEach((k) => setSum(k, placeholder));
   }
 
   // ============================ chart setup ============================
@@ -456,7 +439,6 @@
       if (!res.ok) throw new Error(res.status);
       const d = await res.json();
 
-      activityCount.textContent = nf.format(d.total_connections);
       setStat("in-packets", nf.format(d.inbound.packets));
       setStat("in-bytes", fmtBytes(d.inbound.bytes));
       setStat("out-packets", nf.format(d.outbound.packets));
@@ -467,7 +449,6 @@
       const totalPackets = d.inbound.packets + d.outbound.packets;
       setSum("packets", nf.format(totalPackets));
       setSum("bytes", fmtBytes(d.inbound.bytes + d.outbound.bytes));
-      setSum("connections", nf.format(d.total_connections));
 
       updateTrafficChart(d.series || []);
       updateProtocolChart(d.tcp, d.udp, totalPackets);
