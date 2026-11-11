@@ -1,7 +1,7 @@
 # =====================================================================================================================================================
 # Written by: Samip Kafle
 # Date: Sat Oct 31 2026
-# Description: API to assign a device to a group (or clear it), stored in devices.group_id
+# Description: API to assign a device to a group .  stored in devices.group_id
 # =====================================================================================================================================================
 
 

@@ -1,7 +1,7 @@
 # =====================================================================================================================================================
 # Written by: Samip Kafle
 # Date: Sat Oct 31 2026
-# Description: API to create a device group. groups belong to the logged-in user's network and are saved in the groups table
+# Description: API to create or delete a device group. groups belong to the logged-in user's network and are saved in the groups table
 # =====================================================================================================================================================
 
 

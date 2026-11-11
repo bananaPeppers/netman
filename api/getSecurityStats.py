@@ -1,45 +1,61 @@
 # =====================================================================================================================================================
 # Written by: Samip Kafle
 # Date: Tue Nov 04 2026
-# Description: Security page stats. Aggregates the network_stats rows for one of the
-# logged-in user's devices over a time window (10 min / 30 min / 1 hr / 24 hr) and
-# returns the inbound/outbound totals the security tile shows.
+# Description: API to get security stats for devices top build charts and totals in security page
 # =====================================================================================================================================================
 
 from datetime import datetime, timedelta, timezone
-
 from flask import jsonify, request, session
 from sqlalchemy import func
-
 from api import bp
 from api.targetCheck import owned_target
 from extensions import db
 from models import NetworkStats
 
-# windows the security page offers, in minutes
+# =====================================================================================================================================================
+# global variables and stuffs
+# =====================================================================================================================================================
+
+# alowed time interval that the security page allows to select
 ALLOWED_MINUTES = {10, 30, 60, 1440}
 DEFAULT_MINUTES = 10
 
+# number of time to display in charts plotted in horiwontal row. 
+SERIES_BUCKETS = 12
 
-# naive EST "now", independent of the server process's own system timezone
+# get current time in est to make calculation consistant since server may be using different time format
+# doesnot howevr account for daylight savings- not important yet. 
 def _est_now():
     return datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=5)
 
 
 @bp.route("/security/stats", methods=["POST"])
+
+# =====================================================================================================================================================
+# main function to get a device's security stats for a selected time window
+# =====================================================================================================================================================
 def security_stats():
+
+    #--------------------------------------------------------------Step 1: initial validation and settings ---------------------------------------------    
+    
+    # check if user's logged in
     if "user_id" not in session:
         return jsonify(error="Not authenticated"), 401
 
+    # get JSON data from the security page
     data = request.get_json(silent=True) or {}
 
-    # only report on a device the logged-in user owns
+    # verify that the selected device belongs to the logged-in user
     target = owned_target({"device_id": data.get("device_id")})
+
     if not target:
         return jsonify(error="Device not found"), 404
+
+    # get the validated device ID
     device_id = target[1]
 
-    # clamp the range to one of the allowed windows
+
+    # Set the user selected range. default is 10 minutes
     try:
         minutes = int(data.get("minutes"))
     except (TypeError, ValueError):
@@ -47,12 +63,10 @@ def security_stats():
     if minutes not in ALLOWED_MINUTES:
         minutes = DEFAULT_MINUTES
 
-    # network_stats.timestamp is stored as naive EST (the client's local time),
-    # so cutoff must be computed the same way regardless of the server's own
-    # system clock/timezone - datetime.now() broke this on any host not set to
-    # EST (eg. a UTC-clocked Docker container), since it filtered out every row
+    # start time calculated by substracting current time and selected range time
     cutoff = _est_now() - timedelta(minutes=minutes)
 
+    #--------------------------------step -2: Calculate total packets, bytes, protocols, and samples for the selected time interval ----------------------------    
     row = (
         db.session.query(
             func.coalesce(func.sum(NetworkStats.incoming_packets), 0),
@@ -61,7 +75,6 @@ def security_stats():
             func.coalesce(func.sum(NetworkStats.outgoing_bytes), 0),
             func.coalesce(func.sum(NetworkStats.tcp_packets), 0),
             func.coalesce(func.sum(NetworkStats.udp_packets), 0),
-            func.count(NetworkStats.id),
         )
         .filter(
             NetworkStats.device_id == device_id,
@@ -70,39 +83,33 @@ def security_stats():
         .one()
     )
 
-    in_pkts, out_pkts, in_bytes, out_bytes, tcp, udp, samples = row
+    # set totals from above row query
+    in_pkts, out_pkts, in_bytes, out_bytes, tcp, udp = row
 
-    # time series for the traffic line chart: bucket the window into N slots and
-    # sum inbound/outbound packets per slot, so the chart has a fixed, simple shape
+    #--------------------------------------------------------------get stats for eachs series -----------------------------------------------------------------    
     series = _traffic_series(device_id, cutoff, minutes)
 
+
+    #---------------------------------------------------------step 4: return response to the security page ----------------------------------------------------    
     return jsonify(
         device_id=device_id,
         minutes=minutes,
-        # one network_stats row per monitoring interval; used as the activity count
-        total_connections=int(samples),
         inbound={"packets": int(in_pkts), "bytes": int(in_bytes)},
         outbound={"packets": int(out_pkts), "bytes": int(out_bytes)},
-        # tcp/udp are not split by direction in network_stats, so these are totals
         tcp=int(tcp),
         udp=int(udp),
         series=series,
     ), 200
 
-
-# number of points on the traffic line chart
-SERIES_BUCKETS = 12
-
-
+# =====================================================================================================================================================
+# total builder for each time point out of 12 time slots
+# =====================================================================================================================================================
 def _traffic_series(device_id, cutoff, minutes):
-    """Bucket the [cutoff, now] window into SERIES_BUCKETS equal slots. For each
-    slot, sum inbound/outbound packets and inbound+outbound bytes (throughput).
-    Returns a list of {label, inbound, outbound, bytes}, oldest first, with empty
-    slots as zeros."""
-    now = _est_now()
-    span = (now - cutoff).total_seconds()
-    slot = span / SERIES_BUCKETS if span > 0 else 1
 
+    # size of one slot in seconds
+    slot = (minutes * 60) / SERIES_BUCKETS
+
+    # pull the raw rows in the window (one row per monitoring interval)
     rows = (
         db.session.query(
             NetworkStats.timestamp,
@@ -118,6 +125,7 @@ def _traffic_series(device_id, cutoff, minutes):
         .all()
     )
 
+    # drop each row into its slot and add up the totals
     buckets = [
         {"inbound": 0, "outbound": 0, "bytes": 0}
         for _ in range(SERIES_BUCKETS)
@@ -129,6 +137,7 @@ def _traffic_series(device_id, cutoff, minutes):
         buckets[idx]["outbound"] += int(out or 0)
         buckets[idx]["bytes"] += int(in_b or 0) + int(out_b or 0)
 
+    # label each slot by its end time (HH:MM) for the chart x-axis
     series = []
     for i, b in enumerate(buckets):
         end = cutoff + timedelta(seconds=slot * (i + 1))

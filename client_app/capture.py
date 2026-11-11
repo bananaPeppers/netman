@@ -467,15 +467,15 @@ def main():
     )
 
 #--------------------------------------------------------------------- process 4: csv write------------------------------------------------------------- 
-    csv_thread = threading.Thread(
-        target=write_csv
-    )
+    # csv_thread = threading.Thread(
+    #     target=write_csv
+    # )
 
 #------------------------------------------------------------------------------------------------------------------------------------------------------ 
     capture_thread.start()
     client_thread.start()
     security_thread.start()
-    csv_thread.start()
+    # csv_thread.start()
 
 
 

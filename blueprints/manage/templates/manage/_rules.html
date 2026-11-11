@@ -1,12 +1,9 @@
-{# Right-hand rules panel shared by the groups and devices pages. {% from
-"manage/_rules.html" import rules_panel %} {{ rules_panel("no groups yet",
-"group", rule_domains, rule_safe_mode) }} target is "group" or "device". The
-page picks what the panel shows by calling RulesPanel.select(id, name) /
-RulesPanel.clear() from static/js/rules.js. Use {% call rules_panel(...) %}extra
-html{% endcall %} to put an extra control on the right of the name bar. #} {%
-from "components/popup.html" import popup %} {% from "components/toggle.html"
+<!-- reusable rules that can be used in both devices and groups page -->
+
+{% from "components/popup.html" import popup %} {% from "components/toggle.html"
 import toggle %} {% macro rules_panel(empty_label, target, domains, safe_mode)
 -%}
+
 <div class="split-right">
   <div class="rules-panel">
     <div class="rules-name">

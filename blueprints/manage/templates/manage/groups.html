@@ -1,6 +1,6 @@
-{% extends "manage/manage.html" %} {% block panel %}
-{% from "components/popup.html" import popup %}
-{% from "manage/_rules.html" import rules_panel %}
+{% extends "manage/manage.html" %} {% block panel %} {% from
+"components/popup.html" import popup %} {% from "manage/_rules.html" import
+rules_panel %}
 <div class="split-page">
   <div class="split-left">
     <div class="panel-header">
@@ -14,7 +14,9 @@
       {% for group in groups %}
       <div class="group-tile" data-group-id="{{ group.group_id }}">
         <span class="group-name">{{ group.group_name }}</span>
-        <button class="group-delete" type="button" aria-label="Delete group">&times;</button>
+        <button class="group-delete" type="button" aria-label="Delete group">
+          &times;
+        </button>
       </div>
       {% endfor %}
     </div>
@@ -24,44 +26,48 @@
 </div>
 
 {% call popup("add-popup") %}
-  <p class="popup-text">Enter group name</p>
-  <input
-    type="text"
-    id="group-name-input"
-    class="popup-input"
-    placeholder="Group name"
-  />
-  <div class="popup-buttons">
-    <button class="btn" id="create-btn" type="button">create</button>
-    <button class="btn" id="close-popup-btn" type="button">close</button>
-  </div>
-{% endcall %}
-
-{% call popup("delete-popup") %}
-  <p class="popup-text">
-    Are you sure you want to delete <span id="delete-group-name"></span>?
-  </p>
-  <div class="popup-buttons">
-    <button class="btn" id="confirm-delete-btn" type="button">delete</button>
-    <button class="btn" id="cancel-delete-btn" type="button">cancel</button>
-  </div>
+<p class="popup-text">Enter group name</p>
+<input
+  type="text"
+  id="group-name-input"
+  class="popup-input"
+  placeholder="Group name"
+/>
+<div class="popup-buttons">
+  <button class="btn" id="create-btn" type="button">create</button>
+  <button class="btn" id="close-popup-btn" type="button">close</button>
+</div>
+{% endcall %} {% call popup("delete-popup") %}
+<p class="popup-text">
+  Are you sure you want to delete <span id="delete-group-name"></span>?
+</p>
+<div class="popup-buttons">
+  <button class="btn" id="confirm-delete-btn" type="button">delete</button>
+  <button class="btn" id="cancel-delete-btn" type="button">cancel</button>
+</div>
 {% endcall %}
 
 <script src="{{ url_for('manage.static', filename='js/rules.js') }}"></script>
 <script>
+  // ============================ constants ============================
+  // group list + add-group popup
+  const groupsList = document.getElementById("groups-list");
   const popup = document.getElementById("add-popup");
   const addGroupBtn = document.getElementById("add-group-btn");
   const closePopupBtn = document.getElementById("close-popup-btn");
   const createBtn = document.getElementById("create-btn");
   const groupNameInput = document.getElementById("group-name-input");
-  const groupsList = document.getElementById("groups-list");
 
+  // delete-group popup
   const deletePopup = document.getElementById("delete-popup");
   const deleteGroupName = document.getElementById("delete-group-name");
   const confirmDeleteBtn = document.getElementById("confirm-delete-btn");
   const cancelDeleteBtn = document.getElementById("cancel-delete-btn");
+
+  // mutable state
   let tileToDelete = null;
 
+  // ============================ helpers ============================
   function selectGroup(tile) {
     groupsList
       .querySelectorAll(".group-tile.active")
@@ -69,23 +75,9 @@
     tile.classList.add("active");
     RulesPanel.select(
       tile.dataset.groupId,
-      tile.querySelector(".group-name").textContent.trim()
+      tile.querySelector(".group-name").textContent.trim(),
     );
   }
-
-  // one listener handles every tile, including ones added later
-  groupsList.addEventListener("click", (e) => {
-    const tile = e.target.closest(".group-tile");
-    if (!tile) return;
-
-    if (e.target.closest(".group-delete")) {
-      tileToDelete = tile;
-      deleteGroupName.textContent = tile.querySelector(".group-name").textContent.trim();
-      deletePopup.classList.add("open");
-      return;
-    }
-    selectGroup(tile);
-  });
 
   function buildTile(id, name) {
     const tile = document.createElement("div");
@@ -106,6 +98,24 @@
     return tile;
   }
 
+  // =================== group list (select / delete trigger) ===================
+  // one listener handles every tile, including ones added later
+  groupsList.addEventListener("click", (e) => {
+    const tile = e.target.closest(".group-tile");
+    if (!tile) return;
+
+    if (e.target.closest(".group-delete")) {
+      tileToDelete = tile;
+      deleteGroupName.textContent = tile
+        .querySelector(".group-name")
+        .textContent.trim();
+      deletePopup.classList.add("open");
+      return;
+    }
+    selectGroup(tile);
+  });
+
+  // ============================ add / create group ============================
   addGroupBtn.addEventListener("click", () => {
     popup.classList.add("open");
     groupNameInput.focus();
@@ -150,6 +160,7 @@
     if (e.key === "Enter") createBtn.click();
   });
 
+  // ============================ delete group ============================
   cancelDeleteBtn.addEventListener("click", () => {
     deletePopup.classList.remove("open");
     tileToDelete = null;
@@ -162,7 +173,9 @@
       const res = await fetch("/api/manage/deleteGroup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ group_id: Number(tileToDelete.dataset.groupId) }),
+        body: JSON.stringify({
+          group_id: Number(tileToDelete.dataset.groupId),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete group");
@@ -183,6 +196,7 @@
     }
   });
 
+  // ============================ initialization ============================
   const firstGroup = groupsList.querySelector(".group-tile");
   if (firstGroup) selectGroup(firstGroup);
 </script>

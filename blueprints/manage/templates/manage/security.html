@@ -1,137 +1,125 @@
 {% extends "manage/manage.html" %} {% block panel %}
 <div class="security-page">
   <div class="security-body">
-    <!-- left section: device list + stats/protocol on top, IDS below -->
     <div class="security-left-section">
       <div class="security-upper">
-        <!-- device list tile -->
+        <!-- TILE: device list -->
         <div class="sec-tile security-left">
           <div class="sec-device-list" id="sec-device-list">
-        {% for device in devices %}
-        <button
-          class="sec-device-tile {{ 'active' if loop.first }}"
-          type="button"
-          data-device-id="{{ device.device_id }}"
-        >
-          <span class="sec-device-name"
-            >{{ device.device_name or 'unnamed device' }}</span
-          >
-          {% if device.last_online and device.last_online >= online_cutoff %}
-          <span class="sec-status-dot online"></span>
-          <span class="sec-device-ip">{{ device.ip_address or '-' }}</span>
-          {% else %}
-          <span class="sec-status-dot offline"></span>
-          <span class="sec-device-ip">-</span>
-          {% endif %}
-        </button>
-        {% else %}
-        <p class="sec-empty">no devices yet</p>
-        {% endfor %}
+            {% for device in devices %}
+            <button
+              class="sec-device-tile {{ 'active' if loop.first }}"
+              type="button"
+              data-device-id="{{ device.device_id }}"
+            >
+              <span class="sec-device-name"
+                >{{ device.device_name or 'unnamed device' }}</span
+              >
+              {% if device.last_online and device.last_online >= online_cutoff
+              %}
+              <span class="sec-status-dot online"></span>
+              <span class="sec-device-ip">{{ device.ip_address or '-' }}</span>
+              {% else %}
+              <span class="sec-status-dot offline"></span>
+              <span class="sec-device-ip">-</span>
+              {% endif %}
+            </button>
+            {% else %}
+            <p class="sec-empty">no devices yet</p>
+            {% endfor %}
           </div>
         </div>
-        <!-- middle column: stats over protocol -->
+
         <div class="security-mid">
-          <!-- tile 1: range + activity stats -->
+          <!-- TILE: range + activity stats -->
           <div class="sec-tile sec-stats-tile">
-        <div class="range-row">
-          <span class="range-label">Range</span>
-          <button class="range-pill active" type="button" data-minutes="10">
-            10 min
-          </button>
-          <button class="range-pill" type="button" data-minutes="30">
-            30 min
-          </button>
-          <button class="range-pill" type="button" data-minutes="60">
-            1 hr
-          </button>
-          <button class="range-pill" type="button" data-minutes="1440">
-            24 hr
-          </button>
-        </div>
+            <div class="range-row">
+              <span class="range-label">Range</span>
+              <button class="range-pill active" type="button" data-minutes="10">
+                10 min
+              </button>
+              <button class="range-pill" type="button" data-minutes="30">
+                30 min
+              </button>
+              <button class="range-pill" type="button" data-minutes="60">
+                1 hr
+              </button>
+              <button class="range-pill" type="button" data-minutes="1440">
+                24 hr
+              </button>
+            </div>
 
-        <div class="activity-row">
-          <span class="activity-since"
-            >Activity since:
-            <span class="activity-time">{{ since }}</span></span
-          >
-          <span class="activity-total"
-            >total connections: <span class="activity-count">-</span></span
-          >
-        </div>
+            <div class="activity-row">
+              <span class="activity-since"
+                >Activity since:
+                <span class="activity-time">{{ since }}</span></span
+              >
+              <span class="activity-total"
+                >total connections: <span class="activity-count">-</span></span
+              >
+            </div>
 
-        <div class="stats-cols">
-          <div class="stats-col">
-            <div class="stat-line">
-              <span class="stat-label">inbound<br />packets</span>
-              <span class="stat-value" data-stat="in-packets">-</span>
+            <div class="stats-cols">
+              <div class="stats-col">
+                <div class="stat-line">
+                  <span class="stat-label">inbound<br />packets</span>
+                  <span class="stat-value" data-stat="in-packets">-</span>
+                </div>
+                <div class="stat-line">
+                  <span class="stat-label">Bytes</span>
+                  <span class="stat-value" data-stat="in-bytes">-</span>
+                </div>
+                <div class="stat-line">
+                  <span class="stat-label">TCP</span>
+                  <span class="stat-value" data-stat="tcp">-</span>
+                </div>
+                <div class="stat-line">
+                  <span class="stat-label">UDP</span>
+                  <span class="stat-value" data-stat="udp">-</span>
+                </div>
+              </div>
+
+              <div class="stats-col stats-col-right">
+                <div class="stat-line">
+                  <span class="stat-label">outbound<br />packets</span>
+                  <span class="stat-value" data-stat="out-packets">-</span>
+                </div>
+                <div class="stat-line">
+                  <span class="stat-label">Bytes</span>
+                  <span class="stat-value" data-stat="out-bytes">-</span>
+                </div>
+                <div class="stat-line">
+                  <span class="stat-label">TCP</span>
+                  <span class="stat-value" data-stat="tcp">-</span>
+                </div>
+                <div class="stat-line">
+                  <span class="stat-label">UDP</span>
+                  <span class="stat-value" data-stat="udp">-</span>
+                </div>
+              </div>
             </div>
-            <div class="stat-line">
-              <span class="stat-label">Bytes</span>
-              <span class="stat-value" data-stat="in-bytes">-</span>
-            </div>
-            <div class="stat-line">
-              <span class="stat-label">TCP</span>
-              <span class="stat-value" data-stat="tcp">-</span>
-            </div>
-            <div class="stat-line">
-              <span class="stat-label">UDP</span>
-              <span class="stat-value" data-stat="udp">-</span>
+
+            <div class="sum-cards">
+              <div class="sum-card">
+                <span class="sum-label">Total Packets</span>
+                <span class="sum-value sum-packets" data-sum="packets">-</span>
+              </div>
+              <div class="sum-card">
+                <span class="sum-label">Total Bytes</span>
+                <span class="sum-value sum-bytes" data-sum="bytes">-</span>
+              </div>
+              <div class="sum-card">
+                <span class="sum-label">Threats</span>
+                <span class="sum-value sum-threats" data-sum="threats">-</span>
+              </div>
+              <div class="sum-card">
+                <span class="sum-label">Blocked</span>
+                <span class="sum-value sum-blocked" data-sum="blocked">-</span>
+              </div>
             </div>
           </div>
 
-          <div class="stats-col stats-col-right">
-            <div class="stat-line">
-              <span class="stat-label">outbound<br />packets</span>
-              <span class="stat-value" data-stat="out-packets">-</span>
-            </div>
-            <div class="stat-line">
-              <span class="stat-label">Bytes</span>
-              <span class="stat-value" data-stat="out-bytes">-</span>
-            </div>
-            <div class="stat-line">
-              <span class="stat-label">TCP</span>
-              <span class="stat-value" data-stat="tcp">-</span>
-            </div>
-            <div class="stat-line">
-              <span class="stat-label">UDP</span>
-              <span class="stat-value" data-stat="udp">-</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="sum-cards">
-          <div class="sum-card">
-            <span class="sum-icon" data-icon="packets"
-              ><!-- svg: total packets --></span
-            >
-            <span class="sum-label">Total Packets</span>
-            <span class="sum-value sum-packets" data-sum="packets">-</span>
-          </div>
-          <div class="sum-card">
-            <span class="sum-icon" data-icon="bytes"
-              ><!-- svg: total bytes --></span
-            >
-            <span class="sum-label">Total Bytes</span>
-            <span class="sum-value sum-bytes" data-sum="bytes">-</span>
-          </div>
-          <div class="sum-card">
-            <span class="sum-icon" data-icon="threats"
-              ><!-- svg: threats --></span
-            >
-            <span class="sum-label">Threats</span>
-            <span class="sum-value sum-threats" data-sum="threats">-</span>
-          </div>
-          <div class="sum-card">
-            <span class="sum-icon" data-icon="blocked"
-              ><!-- svg: blocked --></span
-            >
-            <span class="sum-label">Blocked</span>
-            <span class="sum-value sum-blocked" data-sum="blocked">-</span>
-          </div>
-        </div>
-      </div>
-
-          <!-- protocol distribution -->
+          <!-- TILE: protocol distribution chart -->
           <div class="sec-tile sec-chart-tile sec-proto-tile">
             <div class="sec-chart-block">
               <h3 class="sec-tile-title">Protocol Distribution</h3>
@@ -143,58 +131,84 @@
         </div>
       </div>
 
-      <!-- IDS flags spans the bottom of the left section -->
+      <!-- TILE: IDS flags -->
       <div class="sec-tile sec-ids-tile">
         <h3 class="sec-tile-title">IDS flags</h3>
       </div>
     </div>
 
-    <!-- right section: one full-height tile with the two time charts -->
+    <!-- TILE: traffic + throughput charts -->
     <div class="sec-tile sec-chart-tile sec-right-tile">
-        <div class="sec-chart-block sec-chart-traffic">
-          <div class="sec-chart-head">
-            <h3 class="sec-tile-title">Traffic</h3>
-            <div class="traffic-legend">
-              <span class="tleg-item">
-                <img
-                  class="tleg-icon"
-                  src="{{ url_for('manage.static', filename='images/incoming.svg') }}"
-                  alt=""
-                />
-                Inbound
-              </span>
-              <span class="tleg-item">
-                <img
-                  class="tleg-icon"
-                  src="{{ url_for('manage.static', filename='images/outgoing.svg') }}"
-                  alt=""
-                />
-                Outbound
-              </span>
-            </div>
-          </div>
-          <div class="sec-chart-wrap">
-            <canvas id="trafficChart"></canvas>
+      <div class="sec-chart-block sec-chart-traffic">
+        <div class="sec-chart-head">
+          <h3 class="sec-tile-title">Traffic</h3>
+          <div class="traffic-legend">
+            <span class="tleg-item">
+              <img
+                class="tleg-icon"
+                src="{{ url_for('manage.static', filename='images/incoming.svg') }}"
+                alt=""
+              />
+              Inbound
+            </span>
+            <span class="tleg-item">
+              <img
+                class="tleg-icon"
+                src="{{ url_for('manage.static', filename='images/outgoing.svg') }}"
+                alt=""
+              />
+              Outbound
+            </span>
           </div>
         </div>
-
-        <div class="sec-chart-block">
-          <h3 class="sec-tile-title">Throughput</h3>
-          <div class="sec-chart-wrap">
-            <canvas id="throughputChart"></canvas>
-          </div>
+        <div class="sec-chart-wrap">
+          <canvas id="trafficChart"></canvas>
         </div>
       </div>
+
+      <div class="sec-chart-block">
+        <h3 class="sec-tile-title">Throughput</h3>
+        <div class="sec-chart-wrap">
+          <canvas id="throughputChart"></canvas>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
+<!-- imported charts java script. used: chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<!-- rest of the JS script for buttons interactions in this page -->
 <script>
+  // ============================ constants ============================
+  // DOM references
   const secList = document.getElementById("sec-device-list");
   const activityTime = document.querySelector(".activity-time");
   const activityCount = document.querySelector(".activity-count");
 
-  // ----- helpers -----
+  // number formatter (thousands separators)
+  const nf = new Intl.NumberFormat("en-US");
+
+  // chart palette
+  const COLORS = {
+    inbound: "#8FBF8F", // status/success green
+    outbound: "#C8B46A", // status/warning gold
+    other: "#8aa0b0",
+    grid: "rgba(167, 184, 198, 0.12)",
+    ticks: "#A7B8C6",
+    tcp: "#8FBF8F", // status/success green
+    udp: "#C8B46A", // status/warning gold
+  };
+
+  // auto-refresh cadence (matches the monitor's 5s report interval)
+  const REFRESH_MS = 5000;
+
+  // mutable state
+  let statsInFlight = false;
+  let refreshTimer = null;
+
+  // ======================= selection / format helpers =======================
   function selectedDeviceId() {
     const tile = secList.querySelector(".sec-device-tile.active");
     return tile ? tile.dataset.deviceId : null;
@@ -205,15 +219,12 @@
     return pill ? Number(pill.dataset.minutes) : 10;
   }
 
-  // "Activity since" time for a range, in EST (UTC-5), formatted "HH:MM EST"
   function sinceLabel(minutes) {
     const est = new Date(Date.now() - (5 * 60 + minutes) * 60 * 1000);
     const hh = String(est.getUTCHours()).padStart(2, "0");
     const mm = String(est.getUTCMinutes()).padStart(2, "0");
     return `${hh}:${mm} EST`;
   }
-
-  const nf = new Intl.NumberFormat("en-US");
 
   function fmtBytes(n) {
     if (n < 1024) return nf.format(n) + " B";
@@ -227,10 +238,17 @@
     return v.toFixed(v >= 100 ? 0 : 1) + " " + units[i];
   }
 
+  // ======================= stat / summary text helpers =======================
   function setStat(key, value) {
     document
       .querySelectorAll(`.stat-value[data-stat="${key}"]`)
       .forEach((el) => (el.textContent = value));
+  }
+
+  // summary cards
+  function setSum(key, value) {
+    const el = document.querySelector(`.sum-value[data-sum="${key}"]`);
+    if (el) el.textContent = value;
   }
 
   function clearStats(placeholder) {
@@ -246,22 +264,7 @@
     ["packets", "bytes", "connections"].forEach((k) => setSum(k, placeholder));
   }
 
-  // summary cards (threats / blocked intentionally left as "-" for now)
-  function setSum(key, value) {
-    const el = document.querySelector(`.sum-value[data-sum="${key}"]`);
-    if (el) el.textContent = value;
-  }
-
-  // ----- charts -----
-  const COLORS = {
-    inbound: "#8FBF8F", // status/success green
-    outbound: "#C8B46A", // status/warning gold
-    other: "#8aa0b0",
-    grid: "rgba(167, 184, 198, 0.12)",
-    ticks: "#A7B8C6",
-    tcp: "#8FBF8F", // status/success green
-    udp: "#C8B46A", // status/warning gold
-  };
+  // ============================ chart setup ============================
   Chart.defaults.color = COLORS.ticks;
   Chart.defaults.font.family = "'IBM Plex Mono', monospace";
 
@@ -383,6 +386,7 @@
     },
   );
 
+  // ======================= chart update functions =======================
   // series: array of {label, bytes}. Empty -> blank chart.
   function updateThroughputChart(series) {
     const rows = Array.isArray(series) ? series : [];
@@ -424,10 +428,7 @@
     updateThroughputChart([]);
   }
 
-  // ----- load stats for the selected device + range -----
-  // background=true (polling ticks) skips the "..." placeholder flash so the
-  // numbers/charts update in place instead of blanking out every few seconds.
-  let statsInFlight = false;
+  // ============================ data loading ============================
   async function loadStats(background = false) {
     if (statsInFlight) return;
     statsInFlight = true;
@@ -479,7 +480,8 @@
     }
   }
 
-  // ----- device selection -----
+  // ============================ event handlers ============================
+  // device selection
   secList.addEventListener("click", (e) => {
     const tile = e.target.closest(".sec-device-tile");
     if (!tile) return;
@@ -490,7 +492,7 @@
     loadStats();
   });
 
-  // ----- range pills -----
+  // range pills
   document.querySelectorAll(".range-pill").forEach((pill) => {
     pill.addEventListener("click", () => {
       document
@@ -501,13 +503,9 @@
     });
   });
 
-  // ----- auto-refresh -----
-  // Poll on the same cadence the monitor reports on (every 5s), so the
-  // numbers and charts stay live without a page reload. Paused while the tab
-  // isn't visible so we don't poll a background tab.
-  const REFRESH_MS = 5000;
-  let refreshTimer = null;
-
+  // ============================ auto-refresh ============================
+  // Poll on the same cadence the monitor reports on, so the numbers and charts
+  // stay live without a page reload. Paused while the tab isn't visible.
   function startAutoRefresh() {
     if (refreshTimer) return;
     refreshTimer = setInterval(() => loadStats(true), REFRESH_MS);
@@ -527,7 +525,7 @@
     }
   });
 
-  // initial load (default device + range)
+  // ============================ initialization ============================
   loadStats();
   startAutoRefresh();
 </script>
